@@ -1,32 +1,20 @@
 package DTO;
 
-import java.math.BigDecimal;
-
 public class SanPhamDTO {
     private int maSP;
     private String tenSP;
-    private String loaiSP;
-    private int coImei;
-    private String hang;
-    private BigDecimal giaBan;
-    private int thoiGianBH;
-    private int trangThai;
+    private double gia;
+    private int soLuong;
+    private String moTa;
 
-    public SanPhamDTO() {
-    }
+    public SanPhamDTO() {}
 
-    public SanPhamDTO(int maSP, String tenSP, String loaiSP,
-                      int coImei, String hang,
-                      BigDecimal giaBan, int thoiGianBH,
-                      int trangThai) {
+    public SanPhamDTO(int maSP, String tenSP, double gia, int soLuong, String moTa) {
         this.maSP = maSP;
         this.tenSP = tenSP;
-        this.loaiSP = loaiSP;
-        this.coImei = coImei;
-        this.hang = hang;
-        this.giaBan = giaBan;
-        this.thoiGianBH = thoiGianBH;
-        this.trangThai = trangThai;
+        this.gia = gia;
+        this.soLuong = soLuong;
+        this.moTa = moTa;
     }
 
     public int getMaSP() {
@@ -45,52 +33,27 @@ public class SanPhamDTO {
         this.tenSP = tenSP;
     }
 
-    public String getLoaiSP() {
-        return loaiSP;
+    public double getGia() {
+        return gia;
     }
 
-    public void setLoaiSP(String loaiSP) {
-        this.loaiSP = loaiSP;
+    public void setGia(double gia) {
+        this.gia = gia;
     }
 
-    public int getCoImei() {
-        return coImei;
+    public int getSoLuong() {
+        return soLuong;
     }
 
-    public void setCoImei(int coImei) {
-        this.coImei = coImei;
+    public void setSoLuong(int soLuong) {
+        this.soLuong = soLuong;
     }
 
-    public String getHang() {
-        return hang;
+    public String getMoTa() {
+        return moTa;
     }
 
-    public void setHang(String hang) {
-        this.hang = hang;
-    }
-
-    public BigDecimal getGiaBan() {
-        return giaBan;
-    }
-
-    public void setGiaBan(BigDecimal giaBan) {
-        this.giaBan = giaBan;
-    }
-
-    public int getThoiGianBH() {
-        return thoiGianBH;
-    }
-
-    public void setThoiGianBH(int thoiGianBH) {
-        this.thoiGianBH = thoiGianBH;
-    }
-
-    public int getTrangThai() {
-        return trangThai;
-    }
-
-    public void setTrangThai(int trangThai) {
-        this.trangThai = trangThai;
+    public void setMoTa(String moTa) {
+        this.moTa = moTa;
     }
 }
-
