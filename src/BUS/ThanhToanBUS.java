@@ -181,9 +181,7 @@ public class ThanhToanBUS {
         Objects.requireNonNull(thueVAT, "thueVAT");
         Objects.requireNonNull(tongThanhToan, "tongThanhToan");
 
-        // Lưu ý: Trong HoaDonDAO.taoHoaDon có vẻ bạn dùng cột "TongThanhToam" (sai chính tả).
-        // Ở đây mình ưu tiên dùng "TongThanhToan" (đúng), vì ChiTietHoaDonDAO.capNhatTongTien
-        // cũng đang dùng TongThanhToan.
+        
         String sql = "UPDATE HoaDon SET Ma_KH = ?, TongTienHang = ?, GiamGia = ?, ThueVAT = ?, TongThanhToan = ? WHERE Ma_HD = ?";
 
         try (Connection con = DBConnection.getConnection();
@@ -218,4 +216,5 @@ public class ThanhToanBUS {
         return v.setScale(0, RoundingMode.HALF_UP);
     }
 }
+
 
