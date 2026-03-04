@@ -105,45 +105,118 @@ public class ThongKeGUI extends JFrame {
 
     /* ================= CHART ================= */
     private JPanel createChartPanel() {
-        // Phiên bản đơn giản vẽ bằng Java2D — không cần JFreeChart
+        // Improved Java2D bar chart: scaled, labeled, and handles negative values
         return new JPanel() {
-            int[] values = new int[]{39374000, 1592050, -37781950};
-            String[] labels = new String[]{"Vốn", "Doanh thu", "Lợi nhuận"};
-            Color[] colors = new Color[]{new Color(70,130,180), new Color(60,179,113), new Color(220,20,60)};
+            final long[] values = new long[]{39374000L, 1592050L, -37781950L};
+            final String[] labels = new String[]{"Vốn", "Doanh thu", "Lợi nhuận"};
+            final Color[] colors = new Color[]{new Color(70,130,180), new Color(60,179,113), new Color(178,34,34)};
+
+            private String fmt(long v) {
+                java.text.NumberFormat nf = java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN"));
+                return nf.format(v) + " đ";
+            }
 
             @Override protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
                 int w = getWidth();
                 int h = getHeight();
-                g2.setColor(Color.WHITE);
-                g2.fillRect(0,0,w,h);
+                int padLeft = 60, padRight = 40, padTop = 20, padBottom = 50;
+                int chartW = w - padLeft - padRight;
+                int chartH = h - padTop - padBottom;
 
-                int maxAbs = 1;
-                for (int v : values) maxAbs = Math.max(maxAbs, Math.abs(v));
-                int barAreaW = w - 80;
-                int barW = barAreaW / values.length - 20;
-                int baseY = h/2;
+                // background
+                g2.setColor(getBackground());
+                g2.fillRect(0, 0, w, h);
 
-                for (int i = 0; i < values.length; i++) {
-                    int x = 40 + i * (barW + 20);
-                    int barH = (int) ((h/2 - 20) * ((double)Math.abs(values[i]) / maxAbs));
-                    if (values[i] >= 0) {
-                        g2.setColor(colors[i]);
-                        g2.fillRect(x, baseY - barH, barW, barH);
-                    } else {
-                        g2.setColor(colors[i].darker());
-                        g2.fillRect(x, baseY, barW, barH);
-                    }
+                // find min/max
+                long min = Long.MAX_VALUE, max = Long.MIN_VALUE;
+                for (long v : values) { min = Math.min(min, v); max = Math.max(max, v); }
+                if (min == Long.MAX_VALUE) { min = 0; max = 0; }
+                if (min == max) { // avoid division by zero
+                    max = Math.max(max, 1);
+                    min = Math.min(min, -1);
+                }
+
+                // scale
+                double scale = (double) chartH / (max - min);
+
+                // draw horizontal grid lines and axis labels (5 steps)
+                g2.setColor(new Color(230,230,230));
+                g2.setStroke(new BasicStroke(1f));
+                int steps = 4;
+                java.text.NumberFormat nf = java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN"));
+                for (int i = 0; i <= steps; i++) {
+                    double t = (double) i / steps;
+                    long valueAt = (long) Math.round(max - t * (max - min));
+                    int y = padTop + (int) Math.round((max - valueAt) * scale);
+                    g2.setColor(new Color(240,240,240));
+                    g2.drawLine(padLeft, y, w - padRight, y);
                     g2.setColor(Color.DARK_GRAY);
-                    g2.drawString(labels[i], x + 6, baseY + (values[i] < 0 ? barH + 16 : -barH - 6));
+                    String lbl = nf.format(valueAt);
+                    g2.drawString(lbl, 6, y + 4);
+                }
+
+                // baseline for zero
+                int yZero = padTop + (int) Math.round((max - 0d) * scale);
+                g2.setColor(Color.GRAY);
+                g2.setStroke(new BasicStroke(2f));
+                g2.drawLine(padLeft, yZero, w - padRight, yZero);
+
+                // bars
+                int n = values.length;
+                int gap = 24;
+                int barW = (chartW - gap * (n + 1)) / n;
+                for (int i = 0; i < n; i++) {
+                    long v = values[i];
+                    int x = padLeft + gap + i * (barW + gap);
+                    int y = padTop + (int) Math.round((max - Math.max(v, 0)) * scale);
+                    int yTop = padTop + (int) Math.round((max - Math.max(v, (long)min)) * scale);
+                    int height = Math.abs((int) Math.round(v * scale));
+
+                    // compute rect for positive/negative
+                    int rectTop, rectHeight;
+                    if (v >= 0) {
+                        rectTop = padTop + (int) Math.round((max - v) * scale);
+                        rectHeight = (int) Math.round(v * scale);
+                    } else {
+                        rectTop = yZero;
+                        rectHeight = (int) Math.round(Math.abs(v) * scale);
+                    }
+
+                    // ensure minimum visible height
+                    if (rectHeight < 4) rectHeight = 4;
+
+                    // draw bar
+                    g2.setColor(colors[i % colors.length]);
+                    g2.fillRoundRect(x, rectTop, barW, rectHeight, 6, 6);
+                    g2.setColor(colors[i % colors.length].darker());
+                    g2.setStroke(new BasicStroke(1f));
+                    g2.drawRoundRect(x, rectTop, barW, rectHeight, 6, 6);
+
+                    // value label above/below bar
+                    String valLabel = fmt(v);
+                    FontMetrics fm = g2.getFontMetrics();
+                    int labelW = fm.stringWidth(valLabel);
+                    int lx = x + (barW - labelW) / 2;
+                    int ly = (v >= 0) ? rectTop - 6 : rectTop + rectHeight + fm.getAscent() + 2;
+                    g2.setColor(Color.DARK_GRAY);
+                    g2.drawString(valLabel, lx, ly);
+
+                    // category label under chart
+                    String cat = labels[i];
+                    int cw = fm.stringWidth(cat);
+                    int cx = x + (barW - cw) / 2;
+                    g2.drawString(cat, cx, h - 18);
                 }
 
                 g2.dispose();
             }
 
             @Override public Dimension getPreferredSize() {
-                return new Dimension(900, 250);
+                return new Dimension(900, 300);
             }
         };
     }
