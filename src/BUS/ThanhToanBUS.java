@@ -168,13 +168,7 @@ public class ThanhToanBUS {
         );
     }
 
-    /**
-     * Cập nhật thông tin thanh toán trên bảng HoaDon.
-     *
-     * Tùy schema DB của bạn, tên cột có thể là:
-     * - TongTienHang, GiamGia, ThueVAT, TongThanhToan, Ma_KH
-     * - TrangThai (được update ở HoaDonDAO.capNhatTrangThaiHoaDon)
-     */
+    
     private void capNhatThongTinThanhToan(int maHD,
                                           int maKH,
                                           BigDecimal tongTienHang,
@@ -224,3 +218,4 @@ public class ThanhToanBUS {
         return v.setScale(0, RoundingMode.HALF_UP);
     }
 }
+
