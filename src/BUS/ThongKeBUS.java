@@ -5,42 +5,25 @@ import DTO.ThongKe.ThongKeDoanhThuDTO;
 import DTO.ThongKe.ThongKeHoaDonBanDTO;
 import DTO.ThongKe.ThongKeSanPhamBanDTO;
 import DTO.ThongKe.ThongKeTheLoaiBanDTO;
-
 import java.util.ArrayList;
 import java.util.Date;
 
-/**
- *
- * @Nhóm 13
- */
 public class ThongKeBUS {
 
-    private final ThongKeDAO thongKeDAO;
-
-    public ThongKeBUS() {
-        thongKeDAO = new ThongKeDAO();
-    }
+    private final ThongKeDAO thongKeDAO = new ThongKeDAO();
 
     /* =====================================================
        DOANH THU
     ===================================================== */
 
-    // Doanh thu theo từng năm
     public ArrayList<ThongKeDoanhThuDTO> thongKeDoanhThuTheoNam() {
         return thongKeDAO.thongKeDoanhThuTheoNam();
     }
 
-    // Doanh thu theo từng tháng trong năm
     public ArrayList<ThongKeDoanhThuDTO> thongKeDoanhThuTheoThang(int nam) {
         return thongKeDAO.thongKeDoanhThuTheoThang(nam);
     }
 
-    // Doanh thu từng ngày trong tháng
-    public ArrayList<ThongKeDoanhThuDTO> thongKeDoanhThuTungNgayTrongThang(int nam, int thang) {
-        return thongKeDAO.thongKeDoanhThuTungNgayTrongThang(nam, thang);
-    }
-
-    // Doanh thu từ ngày đến ngày
     public ArrayList<ThongKeDoanhThuDTO> thongKeDoanhThuTuNgayDenNgay(Date ngayBatDau, Date ngayKetThuc) {
         return thongKeDAO.thongKeDoanhThuTuNgayDenNgay(ngayBatDau, ngayKetThuc);
     }
@@ -54,6 +37,11 @@ public class ThongKeBUS {
         return thongKeDAO.thongKeSanPhamBanTrongKhoangThoiGian(ngayBatDau, ngayKetThuc);
     }
 
+    public ArrayList<ThongKeSanPhamBanDTO> thongKeTopSanPhamBanChay(
+            int top, Date ngayBatDau, Date ngayKetThuc) {
+        return thongKeDAO.thongKeTopSanPhamBanChay(top, ngayBatDau, ngayKetThuc);
+    }
+
     /* =====================================================
        THỐNG KÊ LOẠI SẢN PHẨM
     ===================================================== */
@@ -64,11 +52,27 @@ public class ThongKeBUS {
     }
 
     /* =====================================================
-       THỐNG KÊ HÓA ĐƠN BÁN
+       THỐNG KÊ HÓA ĐƠN
     ===================================================== */
 
     public ArrayList<ThongKeHoaDonBanDTO> thongKeHoaDonTrongKhoangThoiGian(
             Date ngayBatDau, Date ngayKetThuc) {
         return thongKeDAO.thongKeHoaDonTrongKhoangThoiGian(ngayBatDau, ngayKetThuc);
+    }
+
+    /* =====================================================
+       THỐNG KÊ TỒN KHO
+    ===================================================== */
+
+    public ArrayList<Object[]> thongKeSanPhamTonKho() {
+        return thongKeDAO.thongKeSanPhamTonKho();
+    }
+
+    /* =====================================================
+       THỐNG KÊ NHÂN VIÊN
+    ===================================================== */
+
+    public ArrayList<Object[]> thongKeDoanhThuTheoNhanVien(Date ngayBatDau, Date ngayKetThuc) {
+        return thongKeDAO.thongKeDoanhThuTheoNhanVien(ngayBatDau, ngayKetThuc);
     }
 }

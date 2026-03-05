@@ -3,10 +3,7 @@
         "src"
     ],
     "java.project.referencedLibraries": [
-        "c:\\Users\\THE ANH\\Downloads\\miglayout-core-11.4.2.jar",
-        "c:\\Users\\THE ANH\\Documents\\Tài liệu JAVA\\Đồ án JAVA\\src\\lib\\mssql-jdbc-13.2.1.jre11.jar",
-        "c:\\Users\\THE ANH\\Downloads\\miglayout-swing-11.4.2.jar",
-        "lib/*.jar"
-        
+        "lib/**/*.jar",
+        "src/lib/**/*.jar"
     ]
 }

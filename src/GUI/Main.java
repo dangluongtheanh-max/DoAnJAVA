@@ -1,9 +1,9 @@
 package GUI;
 
-import javax.swing.*;
-import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.border.*;
 
 
 
@@ -46,7 +46,7 @@ public class Main extends JFrame {
         contentPanel.add(createPlaceholder("Nhà cung cấp", "🏭"), "Nhà cung cấp");
         contentPanel.add(createPlaceholder("Bảo hành", "🛡️"), "Bảo hành");
         contentPanel.add(createPlaceholder("Đổi trả", "🔄"), "Đổi trả");
-        contentPanel.add(createPlaceholder("Thống kê", "📊"), "Thống kê");
+        contentPanel.add(new ThongKeGUI(), "Thống kê");
 
         body.add(contentPanel, BorderLayout.CENTER);
         add(body, BorderLayout.CENTER);
