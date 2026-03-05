@@ -1,21 +1,51 @@
 package DTO;
 
+import java.math.BigDecimal;
+
 public class SanPhamDTO {
+
     private int maSP;
     private String tenSP;
-    private double gia;
-    private int soLuong;
+    private int maLoai;
+    private String thuongHieu;
+    private String mauSac;
+    private BigDecimal gia;
+    private BigDecimal giaGoc;
+    private int soLuongTon;
+    private int soLuongToiThieu;
+    private int soLuongToiDa;
+    private int thoiHanBaoHanhThang;
     private String moTa;
+    private String trangThai;
 
-    public SanPhamDTO() {}
+    // Constructor rỗng
+    public SanPhamDTO() {
+    }
 
-    public SanPhamDTO(int maSP, String tenSP, double gia, int soLuong, String moTa) {
+    // Constructor đầy đủ
+    public SanPhamDTO(int maSP, String tenSP, int maLoai,
+                      String thuongHieu, String mauSac,
+                      BigDecimal gia, BigDecimal giaGoc,
+                      int soLuongTon, int soLuongToiThieu, int soLuongToiDa,
+                      int thoiHanBaoHanhThang,
+                      String moTa, String trangThai) {
+
         this.maSP = maSP;
         this.tenSP = tenSP;
+        this.maLoai = maLoai;
+        this.thuongHieu = thuongHieu;
+        this.mauSac = mauSac;
         this.gia = gia;
-        this.soLuong = soLuong;
+        this.giaGoc = giaGoc;
+        this.soLuongTon = soLuongTon;
+        this.soLuongToiThieu = soLuongToiThieu;
+        this.soLuongToiDa = soLuongToiDa;
+        this.thoiHanBaoHanhThang = thoiHanBaoHanhThang;
         this.moTa = moTa;
+        this.trangThai = trangThai;
     }
+
+    // Getter & Setter
 
     public int getMaSP() {
         return maSP;
@@ -33,20 +63,76 @@ public class SanPhamDTO {
         this.tenSP = tenSP;
     }
 
-    public double getGia() {
+    public int getMaLoai() {
+        return maLoai;
+    }
+
+    public void setMaLoai(int maLoai) {
+        this.maLoai = maLoai;
+    }
+
+    public String getThuongHieu() {
+        return thuongHieu;
+    }
+
+    public void setThuongHieu(String thuongHieu) {
+        this.thuongHieu = thuongHieu;
+    }
+
+    public String getMauSac() {
+        return mauSac;
+    }
+
+    public void setMauSac(String mauSac) {
+        this.mauSac = mauSac;
+    }
+
+    public BigDecimal getGia() {
         return gia;
     }
 
-    public void setGia(double gia) {
+    public void setGia(BigDecimal gia) {
         this.gia = gia;
     }
 
-    public int getSoLuong() {
-        return soLuong;
+    public BigDecimal getGiaGoc() {
+        return giaGoc;
     }
 
-    public void setSoLuong(int soLuong) {
-        this.soLuong = soLuong;
+    public void setGiaGoc(BigDecimal giaGoc) {
+        this.giaGoc = giaGoc;
+    }
+
+    public int getSoLuongTon() {
+        return soLuongTon;
+    }
+
+    public void setSoLuongTon(int soLuongTon) {
+        this.soLuongTon = soLuongTon;
+    }
+
+    public int getSoLuongToiThieu() {
+        return soLuongToiThieu;
+    }
+
+    public void setSoLuongToiThieu(int soLuongToiThieu) {
+        this.soLuongToiThieu = soLuongToiThieu;
+    }
+
+    public int getSoLuongToiDa() {
+        return soLuongToiDa;
+    }
+
+    public void setSoLuongToiDa(int soLuongToiDa) {
+        this.soLuongToiDa = soLuongToiDa;
+    }
+
+    public int getThoiHanBaoHanhThang() {
+        return thoiHanBaoHanhThang;
+    }
+
+    public void setThoiHanBaoHanhThang(int thoiHanBaoHanhThang) {
+        this.thoiHanBaoHanhThang = thoiHanBaoHanhThang;
     }
 
     public String getMoTa() {
@@ -55,5 +141,13 @@ public class SanPhamDTO {
 
     public void setMoTa(String moTa) {
         this.moTa = moTa;
+    }
+
+    public String getTrangThai() {
+        return trangThai;
+    }
+
+    public void setTrangThai(String trangThai) {
+        this.trangThai = trangThai;
     }
 }
