@@ -6,19 +6,17 @@ import java.awt.*;
 import java.awt.event.*;
 
 
+
 public class LaptopStore extends JFrame {
 
     private static final Color PRIMARY      = new Color(21, 101, 192);
     private static final Color PRIMARY_DARK = new Color(10, 60, 130);
     private static final Color ACCENT       = new Color(0, 188, 212);
-    private static final Color HEADER_TOP   = new Color(10, 60, 140);
-    private static final Color HEADER_BTM   = new Color(21, 101, 192);
     private static final Color CONTENT_BG   = new Color(236, 242, 250);
     private static final Color SIDEBAR_TEXT = Color.WHITE;
 
     private static final Font MENU_FONT   = new Font("Segoe UI", Font.PLAIN, 16);
     private static final Font MENU_BOLD   = new Font("Segoe UI", Font.BOLD, 17);
-    private static final Font HEADER_FONT = new Font("Segoe UI", Font.BOLD, 23);
 
     private JPanel activeItem = null;
     private JPanel contentPanel;
@@ -40,12 +38,15 @@ public class LaptopStore extends JFrame {
         contentPanel = new JPanel(cardLayout);
         contentPanel.setBackground(CONTENT_BG);
 
-        String[][] pages = {
-            {"Bán hàng","🛒"}, {"Nhập hàng","🚚"}, {"Sản phẩm","💻"},
-            {"Nhân viên","👤"}, {"Khách hàng","🤝"}, {"Nhà cung cấp","🏭"},
-            {"Bảo hành","🛡️"}, {"Đổi trả","🔄"}, {"Thống kê","📊"}
-        };
-        for (String[] p : pages) contentPanel.add(createPlaceholder(p[0], p[1]), p[0]);
+        contentPanel.add(new BanHangPanel2(), "Bán hàng");
+        contentPanel.add(createPlaceholder("Nhập hàng", "🚚"), "Nhập hàng");
+        contentPanel.add(createPlaceholder("Sản phẩm", "💻"), "Sản phẩm");
+        contentPanel.add(createPlaceholder("Nhân viên", "👤"), "Nhân viên");
+        contentPanel.add(createPlaceholder("Khách hàng", "🤝"), "Khách hàng");
+        contentPanel.add(createPlaceholder("Nhà cung cấp", "🏭"), "Nhà cung cấp");
+        contentPanel.add(createPlaceholder("Bảo hành", "🛡️"), "Bảo hành");
+        contentPanel.add(createPlaceholder("Đổi trả", "🔄"), "Đổi trả");
+        contentPanel.add(createPlaceholder("Thống kê", "📊"), "Thống kê");
 
         body.add(contentPanel, BorderLayout.CENTER);
         add(body, BorderLayout.CENTER);
@@ -301,5 +302,5 @@ public class LaptopStore extends JFrame {
         try { UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()); }
         catch (Exception ignored) {}
         SwingUtilities.invokeLater(LaptopStore::new);
-    }
+    }   
 }
