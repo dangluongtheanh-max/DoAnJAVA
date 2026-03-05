@@ -2,8 +2,9 @@ package BUS;
 
 import DAO.SanPhamDAO;
 import DTO.SanPhamDTO;
+
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.List;
 
 public class SanPhamBUS {
 
@@ -13,56 +14,43 @@ public class SanPhamBUS {
         sanPhamDAO = new SanPhamDAO();
     }
 
-    // ================== LẤY DANH SÁCH ==================
-    public List<SanPhamDTO> getAllSanPham() {
+    // Lấy toàn bộ sản phẩm
+    public ArrayList<SanPhamDTO> getAll() {
         return sanPhamDAO.getAll();
     }
 
-    // ================== THÊM ==================
-    public boolean themSanPham(SanPhamDTO sp) {
-        if (!kiemTraHopLe(sp)) return false;
-        if (kiemTraTrungMa(sp.getMaSP())) return false;
+    // Kiểm tra dữ liệu hợp lệ trước khi thêm / sửa
+    public String validate(SanPhamDTO sp) {
 
-        return sanPhamDAO.insert(sp);
+        if (sp.getTenSP() == null || sp.getTenSP().trim().isEmpty())
+            return "Tên sản phẩm không được để trống";
+
+        if (sp.getGia() == null || sp.getGia().compareTo(BigDecimal.ZERO) < 0)
+            return "Giá phải >= 0";
+
+        if (sp.getGiaGoc() != null &&
+                sp.getGiaGoc().compareTo(BigDecimal.ZERO) < 0)
+            return "Giá gốc phải >= 0";
+
+        if (sp.getSoLuongTon() < 0)
+            return "Số lượng tồn không được âm";
+
+        if (sp.getSoLuongToiThieu() < 0)
+            return "Số lượng tối thiểu không được âm";
+
+        if (sp.getSoLuongToiDa() < 0)
+            return "Số lượng tối đa không được âm";
+
+        if (sp.getThoiHanBaoHanhThang() < 0)
+            return "Thời hạn bảo hành không hợp lệ";
+
+        if (sp.getTrangThai() == null ||
+                (!sp.getTrangThai().equals("DangBan") &&
+                 !sp.getTrangThai().equals("NgungBan") &&
+                 !sp.getTrangThai().equals("HetHang")))
+            return "Trạng thái không hợp lệ";
+
+        return "OK";
     }
 
-    // ================== SỬA ==================
-    public boolean suaSanPham(SanPhamDTO sp) {
-        if (!kiemTraHopLe(sp)) return false;
-
-        return sanPhamDAO.update(sp);
-    }
-
-    // ================== XÓA ==================
-    public boolean xoaSanPham(int maSP) {
-        return sanPhamDAO.delete(maSP);
-    }
-
-    // ================== TÌM KIẾM ==================
-    public ArrayList<SanPhamDTO> timKiemTheoTen(String keyword) {
-        ArrayList<SanPhamDTO> ketQua = new ArrayList<>();
-        for (SanPhamDTO sp : getAllSanPham()) {
-            if (sp.getTenSP().toLowerCase().contains(keyword.toLowerCase())) {
-                ketQua.add(sp);
-            }
-        }
-        return ketQua;
-    }
-
-    // ================== KIỂM TRA ==================
-    private boolean kiemTraHopLe(SanPhamDTO sp) {
-        if (sp.getTenSP() == null || sp.getTenSP().isEmpty()) return false;
-        if (sp.getGia() < 0) return false;
-        if (sp.getSoLuong() < 0) return false;
-        return true;
-    }
-
-    private boolean kiemTraTrungMa(int maSP) {
-        for (SanPhamDTO sp : getAllSanPham()) {
-            if (sp.getMaSP() == maSP) {
-                return true;
-            }
-        }
-        return false;
-    }
 }
