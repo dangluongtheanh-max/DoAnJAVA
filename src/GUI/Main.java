@@ -25,7 +25,7 @@ public class Main extends JFrame {
     public Main() {
         setTitle("Phần mềm quản lý cửa hàng Laptop");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1150, 700);
+        setSize(1150, 700); 
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
@@ -38,15 +38,16 @@ public class Main extends JFrame {
         contentPanel = new JPanel(cardLayout);
         contentPanel.setBackground(CONTENT_BG);
 
-        contentPanel.add(new BanHangPanel2(), "Bán hàng");
+        //contentPanel.add(new BanHangPanel2(), "Bán hàng");
+
         contentPanel.add(createPlaceholder("Nhập hàng", "🚚"), "Nhập hàng");
         contentPanel.add(createPlaceholder("Sản phẩm", "💻"), "Sản phẩm");
         contentPanel.add(createPlaceholder("Nhân viên", "👤"), "Nhân viên");
         contentPanel.add(createPlaceholder("Khách hàng", "🤝"), "Khách hàng");
         contentPanel.add(createPlaceholder("Nhà cung cấp", "🏭"), "Nhà cung cấp");
-        contentPanel.add(createPlaceholder("Bảo hành", "🛡️"), "Bảo hành");
-        contentPanel.add(createPlaceholder("Đổi trả", "🔄"), "Đổi trả");
-        contentPanel.add(new ThongKeGUI(), "Thống kê");
+        contentPanel.add(new BaoHanh(), "Bảo hành");
+        contentPanel.add(new DoiTra(), "Đổi trả");
+        contentPanel.add(createPlaceholder("Thống kê", "📊"), "Thống kê");
 
         body.add(contentPanel, BorderLayout.CENTER);
         add(body, BorderLayout.CENTER);
