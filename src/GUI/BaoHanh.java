@@ -1,7 +1,10 @@
 package GUI;
 
+import BUS.BaoHanhBUS;
+import DTO.BaoHanhDTO;
+
 import java.awt.*;
-import java.awt.event.*;
+import java.math.BigDecimal;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -9,13 +12,9 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
-import util.DBConnection;
 /**
- * Panel Quản lý Bảo hành
- * Bảng: [LAPTOPSTORE].[dbo].[BAOHANH]
- * Cột : MaBaoHanh, MaIMEI, MaSP, MaHoaDon, MaNVTiepNhan, MaNVXuLy,
- *       NgayTiepNhan, NgayHenTra, NgayTra, MoTaLoi, HinhThucXuLy,
- *       KetQuaXuLy, ChiPhiPhatSinh, TrangThai
+ * Panel Quản lý Bảo hành — GUI layer.
+ * Mọi nghiệp vụ và truy cập CSDL đều đi qua BaoHanhBUS (BUS).
  */
 public class BaoHanh extends JPanel {
 
@@ -37,16 +36,17 @@ public class BaoHanh extends JPanel {
     private static final Font F_TABLE  = new Font("Segoe UI", Font.PLAIN, 12);
     private static final Font F_HEADER = new Font("Segoe UI", Font.BOLD,  12);
 
-    // Giá trị đúng theo CHECK constraint trong DB
-    private static final String[] HINH_THUC_XL = {
-        "SuaChuaTaiCho", "GuiHang", "ThayTheMoi"
-    };
-    private static final String[] TRANG_THAI = {
-        "DangXuLy", "DaGuiHang", "ChoLinhKien", "DaTraKhach"
-    };
-    private static final String[] FILTER_TT = {
-        "Tất cả", "DangXuLy", "DaGuiHang", "ChoLinhKien", "DaTraKhach"
-    };
+    // Lấy danh sách hợp lệ từ BUS — tránh khai báo trùng với Service
+    private static final String[] HINH_THUC_XL =
+            BaoHanhBUS.HINH_THUC_HOP_LE.toArray(new String[0]);
+    private static final String[] TRANG_THAI =
+            BaoHanhBUS.TRANG_THAI_HOP_LE.toArray(new String[0]);
+    private static final String[] FILTER_TT;
+    static {
+        FILTER_TT = new String[TRANG_THAI.length + 1];
+        FILTER_TT[0] = "Tất cả";
+        System.arraycopy(TRANG_THAI, 0, FILTER_TT, 1, TRANG_THAI.length);
+    }
 
     // Tên cột hiển thị trên bảng
     private static final String[] COL_NAMES = {
@@ -72,15 +72,32 @@ public class BaoHanh extends JPanel {
 
     private final SimpleDateFormat SDF = new SimpleDateFormat("dd/MM/yyyy");
 
+    // BUS layer — toàn bộ nghiệp vụ và DB đi qua đây
+    private final BaoHanhBUS service = new BaoHanhBUS();
+
     // ══════════════════════════════════════════════════════════════════════════
+    // public BaoHanh() {
+    //     setLayout(new BorderLayout(0, 0));
+    //     setBackground(CONTENT_BG);
+    //     add(buildHeader(),    BorderLayout.NORTH);
+    //     add(buildBody(),      BorderLayout.CENTER);
+    //     add(buildStatusBar(), BorderLayout.SOUTH);
+    //     SwingUtilities.invokeLater(() -> loadDataAsync(null, null));
+        
+    // }
     public BaoHanh() {
-        setLayout(new BorderLayout(0, 0));
-        setBackground(CONTENT_BG);
+    setLayout(new BorderLayout(0, 0));
+    setBackground(CONTENT_BG);
+    try {
         add(buildHeader(),    BorderLayout.NORTH);
         add(buildBody(),      BorderLayout.CENTER);
         add(buildStatusBar(), BorderLayout.SOUTH);
-        SwingUtilities.invokeLater(() -> loadDataAsync(null, null));
+    } catch (Exception e) {
+        e.printStackTrace(); // xem lỗi trong console
+        add(new JLabel("Lỗi khởi động: " + e.getMessage()));
     }
+    SwingUtilities.invokeLater(() -> loadDataAsync(null, null));
+}
 
     // ══════════════════════════════════════════════════════════════════════════
     //  HEADER
@@ -133,6 +150,7 @@ public class BaoHanh extends JPanel {
             JSplitPane.HORIZONTAL_SPLIT, buildFormPanel(), buildTablePanel());
         sp.setDividerLocation(350);
         sp.setDividerSize(5);
+        sp.setResizeWeight(0.5);
         sp.setBackground(CONTENT_BG);
         sp.setBorder(null);
         return sp;
@@ -252,7 +270,7 @@ public class BaoHanh extends JPanel {
         p.setBackground(Color.WHITE);
         p.setBorder(BorderFactory.createEmptyBorder(6,12,12,12));
 
-        btnAdd    = mkButton("+ Thêm mới",      SUCCESS,                  Color.WHITE);
+        btnAdd    = mkButton("Thêm mới",      SUCCESS,                  Color.WHITE);
         btnUpdate = mkButton("Cập nhật",      WARNING,                  Color.WHITE);
         btnDelete = mkButton("Xóa phiếu",     DANGER,                   Color.WHITE);
         JButton btnClear = mkButton("Làm mới", new Color(100,110,130),   Color.WHITE);
@@ -384,91 +402,64 @@ public class BaoHanh extends JPanel {
         }.execute();
     }
 
-    private List<Object[]> fetchRows(String kw, String tt) throws SQLException {
-        boolean hasKW = kw != null && !kw.isBlank();
+    private List<Object[]> fetchRows(String kw, String tt) throws Exception {
         boolean hasTT = tt != null && !tt.isBlank() && !tt.equals("Tất cả");
-
-        StringBuilder sql = new StringBuilder(
-            "SELECT MaBaoHanh, MaIMEI, MaSP, MaHoaDon, " +
-            "MaNVTiepNhan, MaNVXuLy, " +
-            "CONVERT(NVARCHAR,NgayTiepNhan,103) AS NgayTiepNhan, " +
-            "CONVERT(NVARCHAR,NgayHenTra,103)   AS NgayHenTra, " +
-            "CONVERT(NVARCHAR,NgayTra,103)       AS NgayTra, " +
-            "CAST(MoTaLoi AS NVARCHAR(MAX))          AS MoTaLoi, " +
-            "CAST(HinhThucXuLy AS NVARCHAR(MAX))      AS HinhThucXuLy, " +
-            "CAST(KetQuaXuLy AS NVARCHAR(MAX))         AS KetQuaXuLy, " +
-            "ChiPhiPhatSinh, TrangThai " +
-            "FROM BAOHANH WHERE 1=1");
-
-        if (hasKW) sql.append(" AND (MaBaoHanh LIKE ? OR MaIMEI LIKE ? OR MaSP LIKE ? OR MaHoaDon LIKE ?)");
-        if (hasTT) sql.append(" AND TrangThai = ?");
-        sql.append(" ORDER BY NgayTiepNhan DESC");
+        List<BaoHanhDTO> list = hasTT
+                ? service.layDanhSachTheoTrangThai(tt)
+                : service.layTatCaBaoHanh();
 
         List<Object[]> result = new ArrayList<>();
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql.toString())) {
-            int idx = 1;
-            if (hasKW) {
-                String like = "%" + kw + "%";
-                ps.setNString(idx++, like); ps.setNString(idx++, like);
-                ps.setNString(idx++, like); ps.setNString(idx++, like);
+        for (BaoHanhDTO bh : list) {
+            String maBH     = String.valueOf(bh.getMaBaoHanh());
+            String maIMEI   = bh.getMaIMEI()         != null ? bh.getMaIMEI().toString()         : "";
+            String maSP     = String.valueOf(bh.getMaSP());
+            String maHoaDon = String.valueOf(bh.getMaHoaDon());
+            String maNVTN   = bh.getMaNVTiepNhan()   != null ? bh.getMaNVTiepNhan().toString()   : "";
+            String maNVXL   = bh.getMaNVXuLy()       != null ? bh.getMaNVXuLy().toString()       : "";
+
+            // Lọc keyword phía client
+            if (kw != null && !kw.isBlank()) {
+                String lower = kw.toLowerCase();
+                boolean match = maBH.contains(lower)
+                        || maIMEI.toLowerCase().contains(lower)
+                        || maSP.contains(lower)
+                        || maHoaDon.contains(lower);
+                if (!match) continue;
             }
-            if (hasTT) ps.setNString(idx, tt);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                result.add(new Object[]{
-                    rs.getString("MaBaoHanh"),
-                    rs.getString("MaIMEI"),
-                    rs.getString("MaSP"),
-                    rs.getString("MaHoaDon"),
-                    rs.getString("MaNVTiepNhan"),
-                    rs.getString("MaNVXuLy"),
-                    rs.getString("NgayTiepNhan"),
-                    rs.getString("NgayHenTra"),
-                    rs.getString("NgayTra"),
-                    rs.getString("MoTaLoi"),
-                    rs.getString("HinhThucXuLy"),
-                    rs.getString("KetQuaXuLy"),
-                    rs.getString("ChiPhiPhatSinh"),
-                    rs.getString("TrangThai")
-                });
-            }
+
+            result.add(new Object[]{
+                maBH, maIMEI, maSP, maHoaDon,
+                maNVTN, maNVXL,
+                formatDate(bh.getNgayTiepNhan()),
+                formatDate(bh.getNgayHenTra()),
+                formatDate(bh.getNgayTra()),
+                bh.getMoTaLoi(),
+                bh.getHinhThucXuLy(),
+                bh.getKetQuaXuLy(),
+                bh.getChiPhiPhatSinh() != null ? bh.getChiPhiPhatSinh().toPlainString() : "0",
+                bh.getTrangThai()
+            });
         }
         return result;
     }
 
-    // ── INSERT ────────────────────────────────────────────────────────────────
-    // MaBaoHanh là IDENTITY (tự tăng) → không truyền vào INSERT
+    private String formatDate(java.sql.Date d) {
+        return d != null ? SDF.format(d) : "";
+    }
+
+    // ── INSERT — dùng BUS layer ───────────────────────────────────────────────
     private void doInsert() {
         if (!validateForm(false)) return;
-        String sql =
-            "INSERT INTO BAOHANH (MaIMEI,MaSP,MaHoaDon," +
-            "MaNVTiepNhan,MaNVXuLy,NgayTiepNhan,NgayHenTra,NgayTra," +
-            "MoTaLoi,HinhThucXuLy,KetQuaXuLy,ChiPhiPhatSinh,TrangThai) " +
-            "VALUES (?,?,?,?,?,CAST(? AS DATE),CAST(? AS DATE),?,?,?,?,?,?)";
         setBtnsEnabled(false);
-        new SwingWorker<Void,Void>() {
+        new SwingWorker<Void, Void>() {
             String errMsg;
             @Override protected Void doInBackground() {
-                try (Connection con = DBConnection.getConnection();
-                     PreparedStatement ps = con.prepareStatement(sql)) {
-                    ps.setNString(1,  tfMaIMEI.getText().trim());
-                    ps.setNString(2,  tfMaSP.getText().trim());
-                    ps.setNString(3,  nullIfBlank(tfMaHoaDon.getText()));
-                    ps.setNString(4,  nullIfBlank(tfMaNVTN.getText()));
-                    ps.setNString(5,  nullIfBlank(tfMaNVXL.getText()));
-                    ps.setString (6,  toSqlDate(tfNgayTN.getText()));
-                    ps.setString (7,  toSqlDate(tfNgayHen.getText()));
-                    String ngayTra = tfNgayTra.getText().trim();
-                    if (ngayTra.isEmpty()) ps.setNull(8, Types.DATE);
-                    else                   ps.setString(8, toSqlDate(ngayTra));
-                    ps.setNString(9,  taMoTa.getText().trim());
-                    ps.setNString(10, cbHinhThuc.getSelectedItem().toString());
-                    ps.setNString(11, taKetQua.getText().trim());
-                    ps.setBigDecimal(12, parseMoney(tfChiPhi.getText()));
-                    ps.setNString(13, cbTrangThai.getSelectedItem().toString());
-                    ps.executeUpdate();
-                } catch (SQLException ex) {
+                try {
+                    BaoHanhDTO bh = buildDTOFromForm();
+                    service.themBaoHanhMoi(bh);
+                } catch (IllegalArgumentException ex) {
+                    errMsg = "Dữ liệu không hợp lệ: " + ex.getMessage();
+                } catch (Exception ex) {
                     errMsg = "Lỗi thêm: " + ex.getMessage();
                     ex.printStackTrace();
                 }
@@ -476,91 +467,75 @@ public class BaoHanh extends JPanel {
             }
             @Override protected void done() {
                 setBtnsEnabled(true);
-                if (errMsg!=null){showErr(errMsg);return;}
+                if (errMsg != null) { showErr(errMsg); return; }
                 setStatus("Thêm phiếu thành công!", SUCCESS);
-                clearForm(); loadDataAsync(null,null);
+                clearForm(); loadDataAsync(null, null);
             }
         }.execute();
     }
 
-    // ── UPDATE ────────────────────────────────────────────────────────────────
+    // ── UPDATE — dùng BUS layer ───────────────────────────────────────────────
     private void doUpdate() {
-        if (table.getSelectedRow()<0){showErr("Vui lòng chọn một phiếu để cập nhật!");return;}
+        if (table.getSelectedRow() < 0) { showErr("Vui lòng chọn một phiếu để cập nhật!"); return; }
         if (!validateForm(false)) return;
-        String sql =
-            "UPDATE BAOHANH SET MaIMEI=?,MaSP=?,MaHoaDon=?," +
-            "MaNVTiepNhan=?,MaNVXuLy=?," +
-            "NgayTiepNhan=CAST(? AS DATE),NgayHenTra=CAST(? AS DATE)," +
-            "NgayTra=?,MoTaLoi=?,HinhThucXuLy=?,KetQuaXuLy=?," +
-            "ChiPhiPhatSinh=?,TrangThai=? WHERE MaBaoHanh=?";
         final String maBH = tfMaBH.getText().trim();
         setBtnsEnabled(false);
-        new SwingWorker<Integer,Void>() {
+        new SwingWorker<Boolean, Void>() {
             String errMsg;
-            @Override protected Integer doInBackground() {
-                try (Connection con = DBConnection.getConnection();
-                     PreparedStatement ps = con.prepareStatement(sql)) {
-                    ps.setNString(1,  tfMaIMEI.getText().trim());
-                    ps.setNString(2,  tfMaSP.getText().trim());
-                    ps.setNString(3,  nullIfBlank(tfMaHoaDon.getText()));
-                    ps.setNString(4,  nullIfBlank(tfMaNVTN.getText()));
-                    ps.setNString(5,  nullIfBlank(tfMaNVXL.getText()));
-                    ps.setString (6,  toSqlDate(tfNgayTN.getText()));
-                    ps.setString (7,  toSqlDate(tfNgayHen.getText()));
-                    String ngayTra = tfNgayTra.getText().trim();
-                    if (ngayTra.isEmpty()) ps.setNull(8, Types.DATE);
-                    else                   ps.setString(8, toSqlDate(ngayTra));
-                    ps.setNString(9,  taMoTa.getText().trim());
-                    ps.setNString(10, cbHinhThuc.getSelectedItem().toString());
-                    ps.setNString(11, taKetQua.getText().trim());
-                    ps.setBigDecimal(12, parseMoney(tfChiPhi.getText()));
-                    ps.setNString(13, cbTrangThai.getSelectedItem().toString());
-                    ps.setNString(14, maBH);
-                    return ps.executeUpdate();
-                } catch (SQLException ex) {
+            @Override protected Boolean doInBackground() {
+                try {
+                    BaoHanhDTO bh = buildDTOFromForm();
+                    bh.setMaBaoHanh(Integer.parseInt(maBH));
+                    return service.capNhatBaoHanh(bh);
+                } catch (IllegalArgumentException ex) {
+                    errMsg = "Dữ liệu không hợp lệ: " + ex.getMessage(); return false;
+                } catch (Exception ex) {
                     errMsg = "Lỗi cập nhật: " + ex.getMessage();
-                    ex.printStackTrace(); return 0;
+                    ex.printStackTrace(); return false;
                 }
             }
             @Override protected void done() {
                 setBtnsEnabled(true);
-                if (errMsg!=null){showErr(errMsg);return;}
+                if (errMsg != null) { showErr(errMsg); return; }
                 try {
-                    if (get()>0){ setStatus("Cập nhật phiếu ["+maBH+"] thành công!",SUCCESS); loadDataAsync(null,null);}
-                    else showErr("Không tìm thấy mã bảo hành để cập nhật.");
-                } catch (Exception ex){showErr(ex.getMessage());}
+                    if (get()) {
+                        setStatus("Cập nhật phiếu [" + maBH + "] thành công!", SUCCESS);
+                        loadDataAsync(null, null);
+                    } else {
+                        showErr("Không tìm thấy mã bảo hành để cập nhật.");
+                    }
+                } catch (Exception ex) { showErr(ex.getMessage()); }
             }
         }.execute();
     }
 
     // ── DELETE ────────────────────────────────────────────────────────────────
+    // ── DELETE — dùng BUS layer ───────────────────────────────────────────────
     private void doDelete() {
         int row = table.getSelectedRow();
-        if (row<0){showErr("Vui lòng chọn một phiếu để xóa!");return;}
-        String maBH = getCell(row,0);
+        if (row < 0) { showErr("Vui lòng chọn một phiếu để xóa!"); return; }
+        String maBH = getCell(row, 0);
         int ok = JOptionPane.showConfirmDialog(this,
-            "Xóa phiếu bảo hành ["+maBH+"]?\nHành động này không thể hoàn tác.",
+            "Xóa phiếu bảo hành [" + maBH + "]?\nHành động này không thể hoàn tác.",
             "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        if (ok!=JOptionPane.YES_OPTION) return;
+        if (ok != JOptionPane.YES_OPTION) return;
         setBtnsEnabled(false);
-        new SwingWorker<Void,Void>() {
+        new SwingWorker<Void, Void>() {
             String errMsg;
             @Override protected Void doInBackground() {
-                try (Connection con = DBConnection.getConnection();
-                     PreparedStatement ps = con.prepareStatement(
-                         "DELETE FROM BAOHANH WHERE MaBaoHanh=?")) {
-                    ps.setNString(1, maBH);
-                    ps.executeUpdate();
-                } catch (SQLException ex) {
-                    errMsg = "Lỗi xóa: " + ex.getMessage(); ex.printStackTrace();
+                try {
+                    service.xoaBaoHanh(Integer.parseInt(maBH));
+                } catch (Exception ex) {
+                    errMsg = "Lỗi xóa: " + ex.getMessage();
+                    ex.printStackTrace();
                 }
                 return null;
             }
             @Override protected void done() {
                 setBtnsEnabled(true);
-                if (errMsg!=null){showErr(errMsg);return;}
-                setStatus("Đã xóa phiếu ["+maBH+"]", DANGER);
-                clearForm(); loadDataAsync(null,null);
+                if (errMsg != null) { showErr(errMsg); return; }
+                setStatus("Đã xóa phiếu [" + maBH + "]", DANGER);
+                clearForm(); loadDataAsync(null, null);
             }
         }.execute();
     }
@@ -576,14 +551,72 @@ public class BaoHanh extends JPanel {
     //  HELPERS
     // ══════════════════════════════════════════════════════════════════════════
 
+    /** Đọc toàn bộ form và tạo BaoHanhDTO — dùng chung cho Insert & Update.
+     *  Kiểu dữ liệu khớp với BaoHanhDAO: MaIMEI/MaNVTiepNhan/MaNVXuLy là Integer (nullable). */
+    private BaoHanhDTO buildDTOFromForm() {
+        BaoHanhDTO bh = new BaoHanhDTO();
+        bh.setMaSP(parseIntOrZero(tfMaSP.getText()));
+        bh.setMaHoaDon(parseIntOrZero(tfMaHoaDon.getText()));
+        // DAO dùng setObject(..., Types.INTEGER) → null nếu ô trống
+        bh.setMaIMEI(parseIntOrNull(tfMaIMEI.getText()));
+        bh.setMaNVTiepNhan(parseIntOrNull(tfMaNVTN.getText()));
+        bh.setMaNVXuLy(parseIntOrNull(tfMaNVXL.getText()));
+        bh.setNgayTiepNhan(toSqlDateObj(tfNgayTN.getText()));
+        bh.setNgayHenTra(toSqlDateObj(tfNgayHen.getText()));
+        String ngayTra = tfNgayTra.getText().trim();
+        bh.setNgayTra(ngayTra.isEmpty() ? null : toSqlDateObj(ngayTra));
+        bh.setMoTaLoi(taMoTa.getText().trim());
+        bh.setHinhThucXuLy(cbHinhThuc.getSelectedItem().toString());
+        bh.setKetQuaXuLy(taKetQua.getText().trim());
+        bh.setChiPhiPhatSinh(parseMoney(tfChiPhi.getText()));
+        bh.setTrangThai(cbTrangThai.getSelectedItem().toString());
+        return bh;
+    }
+
+    /** Trả về Integer nếu parse được, null nếu ô trống — dùng cho các khóa ngoại nullable */
+    private Integer parseIntOrNull(String s) {
+        if (s == null || s.isBlank()) return null;
+        try { return Integer.parseInt(s.trim()); }
+        catch (NumberFormatException e) { return null; }
+    }
+
+    /** Trả về int, 0 nếu không parse được — dùng cho MaSP, MaHoaDon (bắt buộc) */
+    private int parseIntOrZero(String s) {
+        if (s == null || s.isBlank()) return 0;
+        try { return Integer.parseInt(s.trim()); }
+        catch (NumberFormatException e) { return 0; }
+    }
+
+    private java.sql.Date toSqlDateObj(String ddMMyyyy) {
+        try {
+            SDF.setLenient(false);
+            java.util.Date d = SDF.parse(ddMMyyyy.trim());
+            return new java.sql.Date(d.getTime());
+        } catch (Exception e) { return null; }
+    }
+
     private boolean validateForm(boolean checkPK) {
-        // MaBaoHanh là IDENTITY, không cần validate khi thêm mới
-        if (tfMaIMEI.getText().isBlank())  {showErr("Nhập Mã IMEI!");     tfMaIMEI.requestFocus(); return false;}
-        if (tfMaSP.getText().isBlank())    {showErr("Nhập Mã sản phẩm!"); tfMaSP.requestFocus();   return false;}
-        if (!isValidDate(tfNgayTN.getText()))  {showErr("Ngày tiếp nhận không hợp lệ (yyyy-MM-dd)!"); tfNgayTN.requestFocus();  return false;}
-        if (!isValidDate(tfNgayHen.getText())) {showErr("Ngày hẹn trả không hợp lệ (yyyy-MM-dd)!");  tfNgayHen.requestFocus(); return false;}
+        // MaIMEI: bắt buộc, phải là số nguyên (theo DAO: Types.INTEGER)
+        String maIMEI = tfMaIMEI.getText().trim();
+        if (maIMEI.isBlank()) { showErr("Nhập Mã IMEI!"); tfMaIMEI.requestFocus(); return false; }
+        if (!maIMEI.matches("\\d+")) { showErr("Mã IMEI phải là số nguyên!"); tfMaIMEI.requestFocus(); return false; }
+
+        // MaSP: bắt buộc, số nguyên
+        String maSP = tfMaSP.getText().trim();
+        if (maSP.isBlank()) { showErr("Nhập Mã sản phẩm!"); tfMaSP.requestFocus(); return false; }
+        if (!maSP.matches("\\d+")) { showErr("Mã sản phẩm phải là số nguyên!"); tfMaSP.requestFocus(); return false; }
+
+        // MaNVTiepNhan / MaNVXuLy: không bắt buộc, nhưng nếu nhập phải là số
+        String nvTN = tfMaNVTN.getText().trim();
+        if (!nvTN.isBlank() && !nvTN.matches("\\d+")) { showErr("Mã NV tiếp nhận phải là số nguyên!"); tfMaNVTN.requestFocus(); return false; }
+        String nvXL = tfMaNVXL.getText().trim();
+        if (!nvXL.isBlank() && !nvXL.matches("\\d+")) { showErr("Mã NV xử lý phải là số nguyên!"); tfMaNVXL.requestFocus(); return false; }
+
+        // Ngày
+        if (!isValidDate(tfNgayTN.getText()))  { showErr("Ngày tiếp nhận không hợp lệ (dd/MM/yyyy)!"); tfNgayTN.requestFocus();  return false; }
+        if (!isValidDate(tfNgayHen.getText())) { showErr("Ngày hẹn trả không hợp lệ (dd/MM/yyyy)!");  tfNgayHen.requestFocus(); return false; }
         String ngTra = tfNgayTra.getText().trim();
-        if (!ngTra.isEmpty() && !isValidDate(ngTra)) {showErr("Ngày trả không hợp lệ (yyyy-MM-dd)!"); tfNgayTra.requestFocus(); return false;}
+        if (!ngTra.isEmpty() && !isValidDate(ngTra)) { showErr("Ngày trả không hợp lệ (dd/MM/yyyy)!"); tfNgayTra.requestFocus(); return false; }
         return true;
     }
 
