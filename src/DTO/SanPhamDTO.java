@@ -17,137 +17,93 @@ public class SanPhamDTO {
     private int thoiHanBaoHanhThang;
     private String moTa;
     private String trangThai;
+    private String hinhAnh; // ← Đường dẫn ảnh, VD: "dell_inspiron_3520.png"
 
-    // Constructor rỗng
+    // =========================================================================
+    // CONSTRUCTOR
+    // =========================================================================
+
     public SanPhamDTO() {
     }
 
-    // Constructor đầy đủ
+    // Constructor đầy đủ (không có hinhAnh — set riêng qua setter)
     public SanPhamDTO(int maSP, String tenSP, int maLoai,
                       String thuongHieu, String mauSac,
                       BigDecimal gia, BigDecimal giaGoc,
                       int soLuongTon, int soLuongToiThieu, int soLuongToiDa,
                       int thoiHanBaoHanhThang,
                       String moTa, String trangThai) {
-
-        this.maSP = maSP;
-        this.tenSP = tenSP;
-        this.maLoai = maLoai;
-        this.thuongHieu = thuongHieu;
-        this.mauSac = mauSac;
-        this.gia = gia;
-        this.giaGoc = giaGoc;
-        this.soLuongTon = soLuongTon;
-        this.soLuongToiThieu = soLuongToiThieu;
-        this.soLuongToiDa = soLuongToiDa;
+        this.maSP               = maSP;
+        this.tenSP              = tenSP;
+        this.maLoai             = maLoai;
+        this.thuongHieu         = thuongHieu;
+        this.mauSac             = mauSac;
+        this.gia                = gia;
+        this.giaGoc             = giaGoc;
+        this.soLuongTon         = soLuongTon;
+        this.soLuongToiThieu    = soLuongToiThieu;
+        this.soLuongToiDa       = soLuongToiDa;
         this.thoiHanBaoHanhThang = thoiHanBaoHanhThang;
-        this.moTa = moTa;
-        this.trangThai = trangThai;
+        this.moTa               = moTa;
+        this.trangThai          = trangThai;
     }
 
-    // Getter & Setter
-
-    public int getMaSP() {
-        return maSP;
+    // Constructor đầy đủ có hinhAnh
+    public SanPhamDTO(int maSP, String tenSP, int maLoai,
+                      String thuongHieu, String mauSac,
+                      BigDecimal gia, BigDecimal giaGoc,
+                      int soLuongTon, int soLuongToiThieu, int soLuongToiDa,
+                      int thoiHanBaoHanhThang,
+                      String moTa, String trangThai, String hinhAnh) {
+        this(maSP, tenSP, maLoai, thuongHieu, mauSac, gia, giaGoc,
+             soLuongTon, soLuongToiThieu, soLuongToiDa,
+             thoiHanBaoHanhThang, moTa, trangThai);
+        this.hinhAnh = hinhAnh;
     }
 
-    public void setMaSP(int maSP) {
-        this.maSP = maSP;
-    }
+    // =========================================================================
+    // GETTER & SETTER
+    // =========================================================================
 
-    public String getTenSP() {
-        return tenSP;
-    }
+    public int getMaSP() { return maSP; }
+    public void setMaSP(int maSP) { this.maSP = maSP; }
 
-    public void setTenSP(String tenSP) {
-        this.tenSP = tenSP;
-    }
+    public String getTenSP() { return tenSP; }
+    public void setTenSP(String tenSP) { this.tenSP = tenSP; }
 
-    public int getMaLoai() {
-        return maLoai;
-    }
+    public int getMaLoai() { return maLoai; }
+    public void setMaLoai(int maLoai) { this.maLoai = maLoai; }
 
-    public void setMaLoai(int maLoai) {
-        this.maLoai = maLoai;
-    }
+    public String getThuongHieu() { return thuongHieu; }
+    public void setThuongHieu(String thuongHieu) { this.thuongHieu = thuongHieu; }
 
-    public String getThuongHieu() {
-        return thuongHieu;
-    }
+    public String getMauSac() { return mauSac; }
+    public void setMauSac(String mauSac) { this.mauSac = mauSac; }
 
-    public void setThuongHieu(String thuongHieu) {
-        this.thuongHieu = thuongHieu;
-    }
+    public BigDecimal getGia() { return gia; }
+    public void setGia(BigDecimal gia) { this.gia = gia; }
 
-    public String getMauSac() {
-        return mauSac;
-    }
+    public BigDecimal getGiaGoc() { return giaGoc; }
+    public void setGiaGoc(BigDecimal giaGoc) { this.giaGoc = giaGoc; }
 
-    public void setMauSac(String mauSac) {
-        this.mauSac = mauSac;
-    }
+    public int getSoLuongTon() { return soLuongTon; }
+    public void setSoLuongTon(int soLuongTon) { this.soLuongTon = soLuongTon; }
 
-    public BigDecimal getGia() {
-        return gia;
-    }
+    public int getSoLuongToiThieu() { return soLuongToiThieu; }
+    public void setSoLuongToiThieu(int soLuongToiThieu) { this.soLuongToiThieu = soLuongToiThieu; }
 
-    public void setGia(BigDecimal gia) {
-        this.gia = gia;
-    }
+    public int getSoLuongToiDa() { return soLuongToiDa; }
+    public void setSoLuongToiDa(int soLuongToiDa) { this.soLuongToiDa = soLuongToiDa; }
 
-    public BigDecimal getGiaGoc() {
-        return giaGoc;
-    }
+    public int getThoiHanBaoHanhThang() { return thoiHanBaoHanhThang; }
+    public void setThoiHanBaoHanhThang(int thoiHanBaoHanhThang) { this.thoiHanBaoHanhThang = thoiHanBaoHanhThang; }
 
-    public void setGiaGoc(BigDecimal giaGoc) {
-        this.giaGoc = giaGoc;
-    }
+    public String getMoTa() { return moTa; }
+    public void setMoTa(String moTa) { this.moTa = moTa; }
 
-    public int getSoLuongTon() {
-        return soLuongTon;
-    }
+    public String getTrangThai() { return trangThai; }
+    public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
 
-    public void setSoLuongTon(int soLuongTon) {
-        this.soLuongTon = soLuongTon;
-    }
-
-    public int getSoLuongToiThieu() {
-        return soLuongToiThieu;
-    }
-
-    public void setSoLuongToiThieu(int soLuongToiThieu) {
-        this.soLuongToiThieu = soLuongToiThieu;
-    }
-
-    public int getSoLuongToiDa() {
-        return soLuongToiDa;
-    }
-
-    public void setSoLuongToiDa(int soLuongToiDa) {
-        this.soLuongToiDa = soLuongToiDa;
-    }
-
-    public int getThoiHanBaoHanhThang() {
-        return thoiHanBaoHanhThang;
-    }
-
-    public void setThoiHanBaoHanhThang(int thoiHanBaoHanhThang) {
-        this.thoiHanBaoHanhThang = thoiHanBaoHanhThang;
-    }
-
-    public String getMoTa() {
-        return moTa;
-    }
-
-    public void setMoTa(String moTa) {
-        this.moTa = moTa;
-    }
-
-    public String getTrangThai() {
-        return trangThai;
-    }
-
-    public void setTrangThai(String trangThai) {
-        this.trangThai = trangThai;
-    }
+    public String getHinhAnh() { return hinhAnh; }
+    public void setHinhAnh(String hinhAnh) { this.hinhAnh = hinhAnh; }
 }

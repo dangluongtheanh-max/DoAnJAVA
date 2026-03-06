@@ -1,34 +1,39 @@
 package DTO;
 
+import java.sql.Date;
+
 public class NhanVienDTO {
+
     private int maNV;
     private String tenNV;
     private String gioiTinh;
-    private String cccd;
-    private String sdt;
+    private String soDienThoai;
     private String email;
+    private String diaChi;
+    private Date ngaySinh;
+    private Date ngayVaoLam;
     private String vaiTro;
-    private String username;
-    private String password;
-    private int trangThai;
+    private String trangThai;
+    private String cccd;
 
     public NhanVienDTO() {
     }
 
     public NhanVienDTO(int maNV, String tenNV, String gioiTinh,
-                       String cccd, String sdt, String email,
-                       String vaiTro, String username,
-                       String password, int trangThai) {
+                       String soDienThoai, String email, String diaChi,
+                       Date ngaySinh, Date ngayVaoLam,
+                       String vaiTro, String trangThai, String cccd) {
         this.maNV = maNV;
         this.tenNV = tenNV;
         this.gioiTinh = gioiTinh;
-        this.cccd = cccd;
-        this.sdt = sdt;
+        this.soDienThoai = soDienThoai;
         this.email = email;
+        this.diaChi = diaChi;
+        this.ngaySinh = ngaySinh;
+        this.ngayVaoLam = ngayVaoLam;
         this.vaiTro = vaiTro;
-        this.username = username;
-        this.password = password;
         this.trangThai = trangThai;
+        this.cccd = cccd;
     }
 
     public int getMaNV() {
@@ -55,20 +60,12 @@ public class NhanVienDTO {
         this.gioiTinh = gioiTinh;
     }
 
-    public String getCccd() {
-        return cccd;
+    public String getSoDienThoai() {
+        return soDienThoai;
     }
 
-    public void setCccd(String cccd) {
-        this.cccd = cccd;
-    }
-
-    public String getSdt() {
-        return sdt;
-    }
-
-    public void setSdt(String sdt) {
-        this.sdt = sdt;
+    public void setSoDienThoai(String soDienThoai) {
+        this.soDienThoai = soDienThoai;
     }
 
     public String getEmail() {
@@ -79,6 +76,30 @@ public class NhanVienDTO {
         this.email = email;
     }
 
+    public String getDiaChi() {
+        return diaChi;
+    }
+
+    public void setDiaChi(String diaChi) {
+        this.diaChi = diaChi;
+    }
+
+    public Date getNgaySinh() {
+        return ngaySinh;
+    }
+
+    public void setNgaySinh(Date ngaySinh) {
+        this.ngaySinh = ngaySinh;
+    }
+
+    public Date getNgayVaoLam() {
+        return ngayVaoLam;
+    }
+
+    public void setNgayVaoLam(Date ngayVaoLam) {
+        this.ngayVaoLam = ngayVaoLam;
+    }
+
     public String getVaiTro() {
         return vaiTro;
     }
@@ -87,28 +108,19 @@ public class NhanVienDTO {
         this.vaiTro = vaiTro;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public int getTrangThai() {
+    public String getTrangThai() {
         return trangThai;
     }
 
-    public void setTrangThai(int trangThai) {
+    public void setTrangThai(String trangThai) {
         this.trangThai = trangThai;
     }
-}
 
+    public String getCccd() {
+        return cccd;
+    }
+
+    public void setCccd(String cccd) {
+        this.cccd = cccd;
+    }
+}
