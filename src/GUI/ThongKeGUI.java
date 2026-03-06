@@ -7,13 +7,31 @@ import DTO.ThongKe.ThongKeSanPhamBanDTO;
 import DTO.ThongKe.ThongKeTheLoaiBanDTO;
 import java.awt.*;
 import java.awt.geom.Line2D;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 
 public class ThongKeGUI extends JPanel {
+
+    // ─── Theme (sync Main / BanHang) ──────────────────────────────────────
+    private static final Color PRIMARY = new Color(21, 101, 192);
+    private static final Color PRIMARY_DARK = new Color(10, 60, 130);
+    private static final Color ACCENT = new Color(0, 188, 212);
+    private static final Color CONTENT_BG = new Color(236, 242, 250);
+    private static final Color CARD_BG = Color.WHITE;
+    private static final Color TABLE_HEADER = new Color(21, 101, 192);
+    private static final Font FONT_TITLE = new Font("Segoe UI", Font.BOLD, 20);
+    private static final Font FONT_LABEL = new Font("Segoe UI", Font.BOLD, 13);
+    private static final Font FONT_NORMAL = new Font("Segoe UI", Font.PLAIN, 13);
+    private static final Font FONT_TAB = new Font("Segoe UI", Font.BOLD, 13);
 
     // ─── BUS ────────────────────────────────────────────────────────────────
     private final ThongKeBUS tkBUS = new ThongKeBUS();
@@ -60,21 +78,21 @@ public class ThongKeGUI extends JPanel {
     // ════════════════════════════════════════════════════════════════════════
     public ThongKeGUI() {
         setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(1020, 750));
-        setBackground(Color.WHITE);
+        setBackground(CONTENT_BG);
+        setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
         // Tiêu đề
-        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
-        titlePanel.setBackground(Color.WHITE);
+        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        titlePanel.setBackground(CONTENT_BG);
         JLabel lblTitle = new JLabel("Thống kê");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblTitle.setForeground(new Color(253, 183, 58));
+        lblTitle.setFont(FONT_TITLE);
+        lblTitle.setForeground(PRIMARY);
         titlePanel.add(lblTitle);
         add(titlePanel, BorderLayout.NORTH);
 
         // Tab chính
         JTabbedPane mainTabs = new JTabbedPane();
-        mainTabs.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        styleTabbedPane(mainTabs);
         mainTabs.addTab("Doanh thu",        buildDoanhThuPanel());
         mainTabs.addTab("Bán hàng",         buildBanHangPanel());
         mainTabs.addTab("Hóa đơn theo TG",  buildHoaDonPanel());
@@ -94,8 +112,10 @@ public class ThongKeGUI extends JPanel {
     // ════════════════════════════════════════════════════════════════════════
     private JPanel buildDoanhThuPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(CONTENT_BG);
 
         JTabbedPane subTabs = new JTabbedPane();
+        styleTabbedPane(subTabs);
         subTabs.addTab("Theo tháng trong năm", buildTheoThangPanel());
         subTabs.addTab("Từ ngày đến ngày",      buildTuNgayDenNgayPanel());
         panel.add(subTabs, BorderLayout.CENTER);
@@ -105,12 +125,15 @@ public class ThongKeGUI extends JPanel {
     // ── Sub-tab: Doanh thu theo tháng ───────────────────────────────────────
     private JPanel buildTheoThangPanel() {
         JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.setBackground(CARD_BG);
         panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         // Toolbar
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        styleToolbar(toolbar);
         toolbar.add(new JLabel("Chọn năm:"));
         cbNam = new JComboBox<>(buildYearItems());
+        styleComboBox(cbNam);
         cbNam.addActionListener(e -> loadTheoThang());
         toolbar.add(cbNam);
 
@@ -131,7 +154,7 @@ public class ThongKeGUI extends JPanel {
         styleTable(tableTheoThang);
 
         panel.add(toolbar, BorderLayout.NORTH);
-        panel.add(new JScrollPane(tableTheoThang), BorderLayout.CENTER);
+        panel.add(createTableScrollPane(tableTheoThang), BorderLayout.CENTER);
         // Thêm biểu đồ doanh thu theo tháng
         ArrayList<ThongKeDoanhThuDTO> data = tkBUS.thongKeDoanhThuTheoThang(getSelectedYear());
         chartPanelTheoThang = new RevenueBarChartPanel();
@@ -148,14 +171,17 @@ public class ThongKeGUI extends JPanel {
     }
 
     private static class RevenueBarChartPanel extends JPanel {
-        private final Color colorVon = new Color(223, 190, 144);
-        private final Color colorDoanhThu = new Color(98, 185, 236);
-        private final Color colorLoiNhuan = new Color(154, 128, 230);
+        private final Color colorVon = new Color(0, 188, 212);
+        private final Color colorDoanhThu = new Color(21, 101, 192);
+        private final Color colorLoiNhuan = new Color(111, 66, 193);
         private java.util.List<ThongKeDoanhThuDTO> data = new ArrayList<>();
 
         RevenueBarChartPanel() {
-            setBackground(new Color(245, 245, 245));
+            setBackground(CARD_BG);
             setPreferredSize(new Dimension(900, 320));
+            setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(210, 225, 245)),
+                    BorderFactory.createEmptyBorder(6, 6, 4, 6)));
         }
 
         void setData(java.util.List<ThongKeDoanhThuDTO> data) {
@@ -245,11 +271,14 @@ public class ThongKeGUI extends JPanel {
     // ── Sub-tab: Từ ngày đến ngày ────────────────────────────────────────────
     private JPanel buildTuNgayDenNgayPanel() {
         JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.setBackground(CARD_BG);
         panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        styleToolbar(toolbar);
         toolbar.add(new JLabel("Khoảng thời gian:"));
         DoanhThuCbThoiGian = buildThoiGianComboBox();
+        styleComboBox(DoanhThuCbThoiGian);
         toolbar.add(DoanhThuCbThoiGian);
 
         DoanhThuSpinnerBatDau  = buildDateSpinner();
@@ -285,7 +314,7 @@ public class ThongKeGUI extends JPanel {
         DoanhThuCbThoiGian.setSelectedItem("7 ngày qua");
 
         panel.add(toolbar, BorderLayout.NORTH);
-        panel.add(new JScrollPane(TableTuNgayDenNgay), BorderLayout.CENTER);
+        panel.add(createTableScrollPane(TableTuNgayDenNgay), BorderLayout.CENTER);
         return panel;
     }
 
@@ -294,7 +323,9 @@ public class ThongKeGUI extends JPanel {
     // ════════════════════════════════════════════════════════════════════════
     private JPanel buildBanHangPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(CONTENT_BG);
         JTabbedPane subTabs = new JTabbedPane();
+        styleTabbedPane(subTabs);
         subTabs.addTab("Sản phẩm",  buildSanPhamPanel());
         subTabs.addTab("Thể loại",  buildTheLoaiPanel());
         panel.add(subTabs, BorderLayout.CENTER);
@@ -304,11 +335,14 @@ public class ThongKeGUI extends JPanel {
     // ── Sub-tab: Sản phẩm bán chạy ─────────────────────────────────────────
     private JPanel buildSanPhamPanel() {
         JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.setBackground(CARD_BG);
         panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        styleToolbar(toolbar);
         toolbar.add(new JLabel("Khoảng thời gian:"));
         CbThoiGianSanPham = buildThoiGianComboBox();
+        styleComboBox(CbThoiGianSanPham);
         toolbar.add(CbThoiGianSanPham);
 
         spSpinnerBatDau  = buildDateSpinner();
@@ -320,6 +354,7 @@ public class ThongKeGUI extends JPanel {
 
         toolbar.add(new JLabel("Hiển thị:"));
         cbTopSanPham = new JComboBox<>(new String[]{"Tất cả", "Top 3", "Top 5", "Top 10", "Top 20"});
+        styleComboBox(cbTopSanPham);
         toolbar.add(cbTopSanPham);
 
         JButton btnExcel = makeButton("Xuất Excel");
@@ -349,18 +384,21 @@ public class ThongKeGUI extends JPanel {
         CbThoiGianSanPham.setSelectedItem("7 ngày qua");
 
         panel.add(toolbar, BorderLayout.NORTH);
-        panel.add(new JScrollPane(TableSanPham), BorderLayout.CENTER);
+        panel.add(createTableScrollPane(TableSanPham), BorderLayout.CENTER);
         return panel;
     }
 
     // ── Sub-tab: Thể loại bán chạy ─────────────────────────────────────────
     private JPanel buildTheLoaiPanel() {
         JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.setBackground(CARD_BG);
         panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        styleToolbar(toolbar);
         toolbar.add(new JLabel("Khoảng thời gian:"));
         CbThoiGianTheLoai = buildThoiGianComboBox();
+        styleComboBox(CbThoiGianTheLoai);
         toolbar.add(CbThoiGianTheLoai);
 
         tlSpinnerBatDau  = buildDateSpinner();
@@ -372,6 +410,7 @@ public class ThongKeGUI extends JPanel {
 
         toolbar.add(new JLabel("Hiển thị:"));
         cbTopTheLoai = new JComboBox<>(new String[]{"Tất cả", "Top 3", "Top 5", "Top 10", "Top 20"});
+        styleComboBox(cbTopTheLoai);
         toolbar.add(cbTopTheLoai);
 
         JButton btnExcel = makeButton("Xuất Excel");
@@ -401,7 +440,7 @@ public class ThongKeGUI extends JPanel {
         CbThoiGianTheLoai.setSelectedItem("7 ngày qua");
 
         panel.add(toolbar, BorderLayout.NORTH);
-        panel.add(new JScrollPane(TableTheLoai), BorderLayout.CENTER);
+        panel.add(createTableScrollPane(TableTheLoai), BorderLayout.CENTER);
         return panel;
     }
 
@@ -410,11 +449,14 @@ public class ThongKeGUI extends JPanel {
     // ════════════════════════════════════════════════════════════════════════
     private JPanel buildHoaDonPanel() {
         JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.setBackground(CARD_BG);
         panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        styleToolbar(toolbar);
         toolbar.add(new JLabel("Khoảng thời gian:"));
         CbThoiGian = buildThoiGianComboBox();
+        styleComboBox(CbThoiGian);
         toolbar.add(CbThoiGian);
 
         tgSpinnerBatDau  = buildDateSpinner();
@@ -450,7 +492,7 @@ public class ThongKeGUI extends JPanel {
         CbThoiGian.setSelectedItem("7 ngày qua");
 
         panel.add(toolbar, BorderLayout.NORTH);
-        panel.add(new JScrollPane(TableThoiGian), BorderLayout.CENTER);
+        panel.add(createTableScrollPane(TableThoiGian), BorderLayout.CENTER);
         return panel;
     }
 
@@ -532,10 +574,11 @@ public class ThongKeGUI extends JPanel {
             if (stt > limit) break;
             modelTheLoai.addRow(new Object[]{
                 stt++,
+                dto.getMaLoai(),
                 dto.getLoaiSP(),
                 dto.getTongSoLuongBan(),
-                dto.getSoHoaDon(),
                 dto.getSoSanPham(),
+                dto.getSoHoaDon(),
                 formatVND(dto.getDoanhThu())
             });
         }
@@ -573,6 +616,8 @@ public class ThongKeGUI extends JPanel {
         JSpinner.DateEditor editor = new JSpinner.DateEditor(spinner, DATE_FORMAT);
         spinner.setEditor(editor);
         spinner.setPreferredSize(new Dimension(110, 28));
+        spinner.setFont(FONT_NORMAL);
+        spinner.setBorder(BorderFactory.createLineBorder(new Color(185, 205, 232)));
         return spinner;
     }
 
@@ -662,28 +707,161 @@ public class ThongKeGUI extends JPanel {
     //  HELPERS: EXPORT (stub — kết nối ExcelExporter / PdfExporter của bạn)
     // ════════════════════════════════════════════════════════════════════════
 
-    @SuppressWarnings("unused")
     private void exportExcel(JTable table, String title) {
         JFileChooser fc = new JFileChooser();
+        fc.setFileFilter(new FileNameExtensionFilter("Excel (*.xls)", "xls"));
         fc.setDialogTitle("Lưu file Excel");
         if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             String path = fc.getSelectedFile().getAbsolutePath();
-            if (!path.endsWith(".xlsx")) path += ".xlsx";
-            // TODO: ExcelExporter.exportToExcel(table, path, ...);
-            JOptionPane.showMessageDialog(this, "Đã xuất Excel: " + path);
+            if (!path.toLowerCase().endsWith(".xls")) path += ".xls";
+            try {
+                String html = buildExcelHtml(table, title);
+                Files.writeString(Path.of(path), html, StandardCharsets.UTF_8);
+                JOptionPane.showMessageDialog(this, "Đã xuất Excel: " + path);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this,
+                        "Xuất Excel thất bại: " + e.getMessage(),
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
-    @SuppressWarnings("unused")
     private void exportPdf(JTable table, String title) {
         JFileChooser fc = new JFileChooser();
+        fc.setFileFilter(new FileNameExtensionFilter("PDF (*.pdf)", "pdf"));
         fc.setDialogTitle("Lưu file PDF");
         if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             String path = fc.getSelectedFile().getAbsolutePath();
             if (!path.endsWith(".pdf")) path += ".pdf";
-            // TODO: PdfExporter.exportToPdfReport(..., table, title, path);
-            JOptionPane.showMessageDialog(this, "Đã xuất PDF: " + path);
+            try {
+                writeSimplePdf(table, title, Path.of(path));
+                JOptionPane.showMessageDialog(this, "Đã xuất PDF: " + path);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this,
+                        "Xuất PDF thất bại: " + e.getMessage(),
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+            }
         }
+    }
+
+    private String buildExcelHtml(JTable table, String title) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html><head><meta charset=\"UTF-8\"></head><body>");
+        sb.append("<h3>").append(escapeHtml(title)).append("</h3>");
+        sb.append("<table border='1' cellspacing='0' cellpadding='4'>");
+
+        sb.append("<tr style='background:#1565C0;color:white;'>");
+        for (int c = 0; c < table.getColumnCount(); c++) {
+            sb.append("<th>").append(escapeHtml(table.getColumnName(c))).append("</th>");
+        }
+        sb.append("</tr>");
+
+        for (int r = 0; r < table.getRowCount(); r++) {
+            sb.append("<tr>");
+            for (int c = 0; c < table.getColumnCount(); c++) {
+                Object v = table.getValueAt(r, c);
+                sb.append("<td>").append(escapeHtml(v == null ? "" : String.valueOf(v))).append("</td>");
+            }
+            sb.append("</tr>");
+        }
+        sb.append("</table></body></html>");
+        return sb.toString();
+    }
+
+    private void writeSimplePdf(JTable table, String title, Path outFile) throws IOException {
+        ArrayList<String> lines = new ArrayList<>();
+        lines.add(title);
+        lines.add("");
+
+        StringBuilder header = new StringBuilder();
+        for (int c = 0; c < table.getColumnCount(); c++) {
+            if (c > 0) header.append(" | ");
+            header.append(table.getColumnName(c));
+        }
+        lines.add(header.toString());
+
+        for (int r = 0; r < table.getRowCount(); r++) {
+            StringBuilder row = new StringBuilder();
+            for (int c = 0; c < table.getColumnCount(); c++) {
+                if (c > 0) row.append(" | ");
+                Object v = table.getValueAt(r, c);
+                row.append(v == null ? "" : String.valueOf(v));
+            }
+            lines.add(row.toString());
+        }
+
+        StringBuilder stream = new StringBuilder();
+        stream.append("BT\n/F1 10 Tf\n50 800 Td\n");
+        int maxLines = 46;
+        for (int i = 0; i < lines.size() && i < maxLines; i++) {
+            String line = lines.get(i);
+            if (line.length() > 120) line = line.substring(0, 120);
+            if (i == 0) {
+                stream.append("(").append(escapePdf(line)).append(") Tj\n");
+            } else {
+                stream.append("0 -15 Td\n(").append(escapePdf(line)).append(") Tj\n");
+            }
+        }
+        if (lines.size() > maxLines) {
+            stream.append("0 -15 Td\n(... du lieu con tiep, xem file Excel de day du ...) Tj\n");
+        }
+        stream.append("ET");
+
+        byte[] streamBytes = stream.toString().getBytes(StandardCharsets.ISO_8859_1);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ArrayList<Integer> offsets = new ArrayList<>();
+        offsets.add(0); // object 0
+
+        writeAscii(baos, "%PDF-1.4\n");
+
+        offsets.add(baos.size());
+        writeAscii(baos, "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+
+        offsets.add(baos.size());
+        writeAscii(baos, "2 0 obj\n<< /Type /Pages /Count 1 /Kids [3 0 R] >>\nendobj\n");
+
+        offsets.add(baos.size());
+        writeAscii(baos, "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] ");
+        writeAscii(baos, "/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>\nendobj\n");
+
+        offsets.add(baos.size());
+        writeAscii(baos, "4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n");
+
+        offsets.add(baos.size());
+        writeAscii(baos, "5 0 obj\n<< /Length " + streamBytes.length + " >>\nstream\n");
+        baos.write(streamBytes);
+        writeAscii(baos, "\nendstream\nendobj\n");
+
+        int xrefPos = baos.size();
+        writeAscii(baos, "xref\n0 6\n");
+        writeAscii(baos, "0000000000 65535 f \n");
+        for (int i = 1; i <= 5; i++) {
+            writeAscii(baos, String.format("%010d 00000 n \n", offsets.get(i)));
+        }
+        writeAscii(baos, "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n");
+        writeAscii(baos, String.valueOf(xrefPos));
+        writeAscii(baos, "\n%%EOF");
+
+        Files.write(outFile, baos.toByteArray());
+    }
+
+    private void writeAscii(ByteArrayOutputStream baos, String s) throws IOException {
+        baos.write(s.getBytes(StandardCharsets.ISO_8859_1));
+    }
+
+    private String escapePdf(String text) {
+        return text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)");
+    }
+
+    private String escapeHtml(String text) {
+        return text
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -691,23 +869,102 @@ public class ThongKeGUI extends JPanel {
     // ════════════════════════════════════════════════════════════════════════
 
     private void styleTable(JTable table) {
-        table.setRowHeight(24);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        table.getTableHeader().setBackground(new Color(135, 172, 217));
+        table.setRowHeight(26);
+        table.setFont(FONT_NORMAL);
+        table.getTableHeader().setFont(FONT_LABEL);
+        table.getTableHeader().setBackground(TABLE_HEADER);
         table.getTableHeader().setForeground(Color.WHITE);
-        table.setGridColor(new Color(220, 220, 220));
+        table.getTableHeader().setReorderingAllowed(false);
+        table.setGridColor(new Color(215, 225, 238));
         table.setSelectionBackground(new Color(200, 220, 255));
+        table.setSelectionForeground(PRIMARY_DARK);
         table.setFillsViewportHeight(true);
+        table.setBackground(Color.WHITE);
     }
 
     private JButton makeButton(String text) {
         JButton btn = new JButton(text);
-        btn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        btn.setForeground(new Color(135, 172, 217));
+        btn.setFont(FONT_LABEL);
+        btn.setForeground(Color.WHITE);
+        btn.setBackground(PRIMARY);
         btn.setFocusPainted(false);
+        btn.setOpaque(true);
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(PRIMARY_DARK),
+                BorderFactory.createEmptyBorder(6, 14, 6, 14)));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(PRIMARY_DARK); }
+            @Override public void mouseExited(java.awt.event.MouseEvent e) { btn.setBackground(PRIMARY); }
+        });
         return btn;
+    }
+
+    private void styleTabbedPane(JTabbedPane tabs) {
+        tabs.setFont(FONT_TAB);
+        tabs.setBackground(CARD_BG);
+        tabs.setForeground(PRIMARY_DARK);
+        tabs.setOpaque(true);
+        tabs.setBorder(BorderFactory.createLineBorder(new Color(205, 220, 240)));
+        tabs.setUI(new javax.swing.plaf.basic.BasicTabbedPaneUI() {
+            @Override protected void installDefaults() {
+                super.installDefaults();
+                highlight = ACCENT;
+                lightHighlight = ACCENT;
+                shadow = new Color(200, 215, 235);
+                darkShadow = new Color(180, 200, 225);
+                focus = ACCENT;
+            }
+
+            @Override protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex,
+                    int x, int y, int w, int h, boolean isSelected) {
+                g.setColor(isSelected ? new Color(225, 245, 250) : new Color(243, 248, 255));
+                g.fillRect(x, y, w, h);
+            }
+
+            @Override protected void paintText(Graphics g, int tabPlacement, Font font,
+                    FontMetrics metrics, int tabIndex, String title, Rectangle textRect, boolean isSelected) {
+                g.setFont(FONT_TAB);
+                g.setColor(isSelected ? PRIMARY : PRIMARY_DARK);
+                g.drawString(title, textRect.x, textRect.y + metrics.getAscent());
+            }
+        });
+    }
+
+    private void styleToolbar(JPanel toolbar) {
+        toolbar.setBackground(CARD_BG);
+        toolbar.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 230, 245)),
+                BorderFactory.createEmptyBorder(2, 2, 6, 2)));
+        toolbar.addContainerListener(new java.awt.event.ContainerAdapter() {
+            @Override public void componentAdded(java.awt.event.ContainerEvent e) {
+                if (e.getChild() instanceof JLabel label) {
+                    label.setFont(FONT_LABEL);
+                    label.setForeground(PRIMARY_DARK);
+                }
+            }
+        });
+        for (Component c : toolbar.getComponents()) {
+            if (c instanceof JLabel label) {
+                label.setFont(FONT_LABEL);
+                label.setForeground(PRIMARY_DARK);
+            }
+        }
+    }
+
+    private void styleComboBox(JComboBox<String> cb) {
+        cb.setFont(FONT_NORMAL);
+        cb.setBackground(Color.WHITE);
+        cb.setForeground(PRIMARY_DARK);
+        cb.setBorder(BorderFactory.createLineBorder(new Color(185, 205, 232)));
+        cb.setPreferredSize(new Dimension(Math.max(cb.getPreferredSize().width, 120), 30));
+    }
+
+    private JScrollPane createTableScrollPane(JTable table) {
+        JScrollPane sp = new JScrollPane(table);
+        sp.getViewport().setBackground(Color.WHITE);
+        sp.setBorder(BorderFactory.createLineBorder(new Color(205, 220, 240)));
+        return sp;
     }
 
     /** Tạo danh sách năm từ năm hiện tại trở về 10 năm trước */

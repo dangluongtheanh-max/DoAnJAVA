@@ -242,7 +242,7 @@ public class ThongKeDAO {
         ArrayList<ThongKeTheLoaiBanDTO> list = new ArrayList<>();
 
         String sql = """
-            SELECT LSP.TenLoai,
+            SELECT LSP.MaLoai, LSP.TenLoai,
                    SUM(CTHD.SoLuong) AS SoLuong,
                    COUNT(DISTINCT HD.MaHoaDon) AS SoDon,
                    COUNT(DISTINCT SP.MaSP) AS SoSP,
@@ -253,7 +253,7 @@ public class ThongKeDAO {
             JOIN LOAISANPHAM LSP ON SP.MaLoai = LSP.MaLoai
             WHERE CONVERT(date, HD.NgayLap) BETWEEN ? AND ?
               AND HD.TrangThai = N'HoanThanh'
-            GROUP BY LSP.TenLoai
+                        GROUP BY LSP.MaLoai, LSP.TenLoai
             ORDER BY SoLuong DESC
         """;
 
@@ -266,6 +266,7 @@ public class ThongKeDAO {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 list.add(new ThongKeTheLoaiBanDTO(
+                        rs.getInt("MaLoai"),
                         rs.getString("TenLoai"),
                         rs.getInt("SoLuong"),
                         rs.getInt("SoDon"),
