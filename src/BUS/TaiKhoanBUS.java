@@ -17,11 +17,9 @@ public class TaiKhoanBUS {
         TaiKhoanDTO tk = dao.checkLogin(user, pass);
         
         if (tk != null) {
-            // Lưu thông tin vào phiên làm việc
-            SharedData.currentRole = tk.getVaiTro();
-            SharedData.currentTenNV = tk.getTenNV();
-            SharedData.currentMaNV = tk.getMaNV();
-            return true; // Đăng nhập thành công
+            // Dùng SharedData.login() thay vì ghi thủ công từng field
+            SharedData.login(tk.getMaNV(), tk.getTenNV(), tk.getVaiTro());
+            return true;
         }
         
         return false; // Thất bại

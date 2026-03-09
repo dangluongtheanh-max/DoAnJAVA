@@ -1,90 +1,71 @@
 package DTO;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+
 
 public class PhieuNhapDTO {
-    private int maPhieuNhap;
-    private int maCuaHang;
-    private int maNV;
-    private int maNCC;
-    private LocalDateTime ngayNhap;
+
+    private int    maPN;
+    private int    maNhaCungCap;
+    private int    maNV;
+    private LocalDate  ngayNhap;
     private BigDecimal tongTien;
-    private int trangThai; // 0 = nháp,1 = đã nhập kho, 2 = hủy
+    private String ghiChu;
+    private String trangThai;   // HoanThanh | Huy
 
-    public PhieuNhapDTO() {
-        this.trangThai = 0;
-        this.tongTien = BigDecimal.ZERO;
-        this.ngayNhap = LocalDateTime.now();
+    // ----------------------------------------------------------------
+    // Constructor
+    // ----------------------------------------------------------------
+    public PhieuNhapDTO() {}
+
+    public PhieuNhapDTO(int maNhaCungCap, int maNV,
+                        LocalDate ngayNhap, BigDecimal tongTien,
+                        String ghiChu, String trangThai) {
+        this.maNhaCungCap = maNhaCungCap;
+        this.maNV         = maNV;
+        this.ngayNhap     = ngayNhap;
+        this.tongTien     = tongTien;
+        this.ghiChu       = ghiChu;
+        this.trangThai    = trangThai;
     }
 
-    // Constructor đầy đủ
-    public PhieuNhapDTO(int maPhieuNhap, int maCuaHang, int maNV, int maNCC,
-                        LocalDateTime ngayNhap, BigDecimal tongTien, int trangThai) {
-        this.maPhieuNhap = maPhieuNhap;
-        this.maCuaHang = maCuaHang;
-        this.maNV = maNV;
-        this.maNCC = maNCC;
-        this.ngayNhap = ngayNhap;
-        this.tongTien = tongTien;
-        this.trangThai = trangThai;
-    }
+    // ----------------------------------------------------------------
+    // Getter / Setter
+    // ----------------------------------------------------------------
+    public int getMaPN()                  { return maPN; }
+    public void setMaPN(int maPN)         { this.maPN = maPN; }
 
-    // Getter & Setter
-    public int getMaPhieuNhap() {
-        return maPhieuNhap;
-    }
+    public int getMaNhaCungCap()                       { return maNhaCungCap; }
+    public void setMaNhaCungCap(int maNhaCungCap)      { this.maNhaCungCap = maNhaCungCap; }
 
-    public int getMaCuaHang() {
-        return maCuaHang;
-    }
+    public int getMaNV()                  { return maNV; }
+    public void setMaNV(int maNV)         { this.maNV = maNV; }
 
-    public int getMaNV() {
-        return maNV;
-    }
+    public LocalDate getNgayNhap()                   { return ngayNhap; }
+    public void setNgayNhap(LocalDate ngayNhap)      { this.ngayNhap = ngayNhap; }
 
-    public void setMaNV(int maNV) {
-        this.maNV = maNV;
-    }
+    public BigDecimal getTongTien()                  { return tongTien; }
+    public void setTongTien(BigDecimal tongTien)     { this.tongTien = tongTien; }
 
-    public void setMaPhieuNhap(int maPhieuNhap) {
-        this.maPhieuNhap = maPhieuNhap;
-    }
+    public String getGhiChu()                { return ghiChu; }
+    public void setGhiChu(String ghiChu)     { this.ghiChu = ghiChu; }
 
-    public void setMaCuaHang(int maCuaHang) {
-        this.maCuaHang = maCuaHang;
-    }
+    public String getTrangThai()                   { return trangThai; }
+    public void setTrangThai(String trangThai)     { this.trangThai = trangThai; }
 
-    public int getMaNCC() {
-        return maNCC;
-    }
-
-    public void setMaNCC(int maNCC) {
-        this.maNCC = maNCC;
-    }
-
-    public LocalDateTime getNgayNhap() {
-        return ngayNhap;
-    }
-
-    public void setNgayNhap(LocalDateTime ngayNhap) {
-        this.ngayNhap = ngayNhap;
-    }
-
-    public BigDecimal getTongTien() {
-        return tongTien;
-    }
-
-    public void setTongTien(BigDecimal tongTien) {
-        this.tongTien = tongTien;
-    }
-
-    public int getTrangThai() {
-        return trangThai;
-    }
-
-    public void setTrangThai(int trangThai) {
-        this.trangThai = trangThai;
+    // ----------------------------------------------------------------
+    // toString
+    // ----------------------------------------------------------------
+    @Override
+    public String toString() {
+        return "PhieuNhapDTO{" +
+               "maPN=" + maPN +
+               ", maNhaCungCap=" + maNhaCungCap +
+               ", maNV=" + maNV +
+               ", ngayNhap=" + ngayNhap +
+               ", tongTien=" + tongTien +
+               ", trangThai='" + trangThai + '\'' +
+               '}';
     }
 }
-

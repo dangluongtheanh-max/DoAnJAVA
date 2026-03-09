@@ -1,163 +1,77 @@
 package DAO;
 
 import DTO.ChiTietHoaDonDTO;
-import util.DBConnection;
+import UTIL.DBConnection;
 
-import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 
 public class ChiTietHoaDonDAO {
 
-    public ArrayList<ChiTietHoaDonDTO> getByHoaDon(int maHD) {
-        ArrayList<ChiTietHoaDonDTO> dsCTHoaDon = new ArrayList<>();
-        String sql = "SELECT * FROM CT_HoaDon WHERE Ma_HD = ?";
+    // Thêm 1 dòng chi tiết hóa đơn
+    public static boolean insert(ChiTietHoaDonDTO dto) {
+        String sql = "INSERT INTO CHITIETHOADON (MaHoaDon, MaSP, MaSerial, SoLuong, DonGia) "
+                   + "VALUES (?, ?, ?, ?, ?)";
+        try (Connection cn = DBConnection.getConnection();
+             PreparedStatement pst = cn.prepareStatement(sql)) {
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+            pst.setInt(1, dto.getMaHoaDon());
+            pst.setInt(2, dto.getMaSP());
+            pst.setInt(3, dto.getMaSerial());   // bắt buộc NOT NULL
+            pst.setInt(4, dto.getSoLuong());
+            pst.setBigDecimal(5, dto.getDonGia());
 
-            ps.setInt(1, maHD);
-            ResultSet rs = ps.executeQuery();
+            return pst.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
-            while (rs.next()) {
-                ChiTietHoaDonDTO ct = new ChiTietHoaDonDTO();
-                ct.setMaHD(rs.getInt("Ma_HD"));
-                ct.setMaSP(rs.getInt("Ma_SP"));
-                ct.setMaImei(rs.getInt("Ma_Imei"));
-                ct.setSoLuong(rs.getInt("So_Luong"));
-                ct.setThanhTien(rs.getBigDecimal("Thanh_Tien"));
+    // Lấy tất cả chi tiết theo MaHoaDon
+    public static ArrayList<ChiTietHoaDonDTO> getByHoaDon(int maHoaDon) {
+        ArrayList<ChiTietHoaDonDTO> list = new ArrayList<>();
+        String sql = "SELECT * FROM CHITIETHOADON WHERE MaHoaDon = ?";
+        try (Connection cn = DBConnection.getConnection();
+             PreparedStatement pst = cn.prepareStatement(sql)) {
 
-                dsCTHoaDon.add(ct);
+            pst.setInt(1, maHoaDon);
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return dsCTHoaDon;
+        return list;
     }
 
-     public void xoaCTHoaDon(int maHD){
-        String sql = "DELETE FROM CT_HoaDon WHERE Ma_HD = ? "; //? = 1001
+    // Lấy MaSerial TrongKho đầu tiên của 1 sản phẩm (dùng khi bán hàng)
+    public static int laySerialTrongKho(int maSP) {
+        String sql = "SELECT TOP 1 MaSerial FROM SERIAL "
+                   + "WHERE MaSP = ? AND TrangThai = N'TrongKho'";
+        try (Connection cn = DBConnection.getConnection();
+             PreparedStatement pst = cn.prepareStatement(sql)) {
 
-        try(Connection connect = DBConnection.getConnection();
-            PreparedStatement ps = connect.prepareStatement(sql)){
-            
-            ps.setInt(1, maHD); // xóa tất cả các dòng có mã hđ 1001 trong sql
-            ps.executeUpdate();
-
-            }catch(Exception e){
-                e.printStackTrace();
+            pst.setInt(1, maSP);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) return rs.getInt("MaSerial");
             }
-    }
-
-    public void themSanPham(ChiTietHoaDonDTO ctHoaDon){
-        String sql = """
-            INSERT INTO CT_Hoa_Don
-            (Ma_HD,Ma_SP,Ma_Imei,SoLuong,DonGia,ThanhTien,TrangThai)
-            VALUES(?,?,?,?,?,?,?)
-            """;
-            try(Connection connect = DBConnection.getConnection();
-                PreparedStatement ps = connect.prepareStatement(sql)){
-
-                ps.setInt(1, ctHoaDon.getMaHD());
-                ps.setInt(2, ctHoaDon.getMaSP());
-                if(ctHoaDon.getMaImei() == null)
-                    ps.setNull(3, ctHoaDon.getMaImei());
-                else
-                    ps.setInt(3, ctHoaDon.getMaImei());
-
-                ps.setInt(4, ctHoaDon.getSoLuong());
-                ps.setBigDecimal(5, ctHoaDon.getDonGia());
-                ps.setBigDecimal(6, ctHoaDon.getThanhTien());
-                ps.setInt(7, ctHoaDon.getTrangThai());
-
-                ps.executeUpdate();
-
-            }catch(Exception e){
-                e.printStackTrace();
-            }
-    }
-    
-    public void xoaSanPham(int maHD, int maSP){
-        String sql = "DELETE FROM CT_HoaDon WHERE Ma_HD = ? AND Ma_SP = ?";
-
-        try(Connection connect = DBConnection.getConnection();
-            PreparedStatement ps = connect.prepareStatement(sql)){
-
-                ps.setInt(1, maHD);
-                ps.setInt(2, maSP);
-                ps.executeUpdate();
-
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-    }
-
-    public void tangSoLuongSP(int maHD,int MaSP,BigDecimal donGia){
-        String sql = """
-                UPDATE CT_HoaDon
-                SET SoLuong = SoLuong + 1,
-                    ThanhTien = ThanhTien + ?
-                WHERE Ma_HD = ? AND Ma_SP = ?     
-                """; //vì Ma_HD và Ma_SP là khóa chính trong SQL nên sử dụng chúng để truy vấn đến 1 hàng của CTHĐ
-        try(Connection connect = DBConnection.getConnection();
-            PreparedStatement ps = connect.prepareStatement(sql)){
-            
-            ps.setInt(2,maHD);
-            ps.setInt(3, MaSP);
-            
-            ps.executeUpdate();
-        }catch(Exception e){
-            e.printStackTrace();
-        }        
-    }
-    
-    public void giamSoLuongSP(int maHD, int maSP, BigDecimal donGia) {    
-        String sql = """
-            UPDATE CT_HoaDon
-            SET SoLuong = SoLuong - 1,
-                ThanhTien = ThanhTien - ?
-            WHERE Ma_HD = ? AND Ma_SP = ? AND SoLuong > 1
-        """;
-    
-        try (Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)) {
-    
-            ps.setBigDecimal(1, donGia);
-            ps.setInt(2, maHD);
-            ps.setInt(3, maSP);
-    
-            ps.executeUpdate();
-    
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return -1; // không tìm thấy serial
     }
 
-    
-    public void capNhatTongTien(int maHD) {
-        String sql = """
-            UPDATE HoaDon
-            SET TongTienHang = (
-                SELECT ISNULL(SUM(ThanhTien), 0)
-                FROM CT_HoaDon
-                WHERE Ma_HD = ?
-            ),
-            TongThanhToan = TongTienHang - GiamGia + ThueVAT
-            WHERE Ma_HD = ?
-        """;
-    
-        try (Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)) {
-    
-            ps.setInt(1, maHD);
-            ps.setInt(2, maHD);
-            ps.executeUpdate();
-    
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    // Map ResultSet → ChiTietHoaDonDTO
+    private static ChiTietHoaDonDTO mapRow(ResultSet rs) throws SQLException {
+        return new ChiTietHoaDonDTO(
+            rs.getInt("MaChiTiet"),
+            rs.getInt("MaHoaDon"),
+            rs.getInt("MaSP"),
+            rs.getInt("MaSerial"),
+            rs.getInt("SoLuong"),
+            rs.getBigDecimal("DonGia"),
+            rs.getBigDecimal("ThanhTien")
+        );
     }
 }
-    
-
-    

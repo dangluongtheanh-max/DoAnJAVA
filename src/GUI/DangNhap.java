@@ -2,6 +2,9 @@ package GUI;
 
 import javax.swing.*;
 import javax.swing.border.*;
+
+import BUS.TaiKhoanBUS;
+
 import java.awt.*;
 
 
@@ -190,11 +193,23 @@ public class DangNhap extends JFrame {
 
         loginBtn.addActionListener(e -> {
             String user = userField.getText().trim();
-            if (user.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập tài khoản!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            String pass = new String(passField.getPassword());
+            
+            // Kiểm tra nhanh phía giao diện
+            if (user.isEmpty() || pass.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!");
                 return;
             }
-            JOptionPane.showMessageDialog(this, "Đăng nhập thành công!\nXin chào: " + user, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+
+            TaiKhoanBUS bus = new TaiKhoanBUS();
+            
+            // Bây giờ bus.login trả về boolean, không còn lỗi Type Mismatch
+            if (bus.login(user, pass)) {
+                this.dispose();     // Đóng form đăng nhập
+                new LaptopStore();  // Mở Dashboard chính
+            } else {
+                JOptionPane.showMessageDialog(this, "Sai tài khoản hoặc mật khẩu!");
+            }
         });
 
         mainPanel.add(loginBtn);
@@ -213,9 +228,4 @@ public class DangNhap extends JFrame {
         return f;
     }
 
-    public static void main(String[] args) {
-        try { UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()); }
-        catch (Exception ignored) {}
-        SwingUtilities.invokeLater(DangNhap::new);
-    }
 }

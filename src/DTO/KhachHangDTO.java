@@ -1,83 +1,76 @@
 package DTO;
 
+import java.sql.Date;
+
 public class KhachHangDTO {
-    private int maKH;
-    private String tenKH;
-    private String sdt;
+
+    private int    maKhachHang;
+    private String tenKhachHang;
+    private String soDienThoai;
     private String email;
     private String diaChi;
-    private int diemTichLuy;
-    private int trangThai;
+    private Date   ngaySinh;
+    private String gioiTinh;
+    private int    diemTichLuy;
+    private String hangKhachHang;
+    private double phanTramGiam;
+    private Date   ngayDangKy;
 
-    public KhachHangDTO() {
+    // =========================================================================
+    // CONSTRUCTOR
+    // =========================================================================
+    public KhachHangDTO() {}
+
+    public KhachHangDTO(int maKhachHang, String tenKhachHang, String soDienThoai,
+                        String email, String diaChi, Date ngaySinh, String gioiTinh,
+                        int diemTichLuy, String hangKhachHang, double phanTramGiam,
+                        Date ngayDangKy) {
+        this.maKhachHang  = maKhachHang;
+        this.tenKhachHang = tenKhachHang;
+        this.soDienThoai  = soDienThoai;
+        this.email        = email;
+        this.diaChi       = diaChi;
+        this.ngaySinh     = ngaySinh;
+        this.gioiTinh     = gioiTinh;
+        this.diemTichLuy  = diemTichLuy;
+        this.hangKhachHang = hangKhachHang;
+        this.phanTramGiam  = phanTramGiam;
+        this.ngayDangKy   = ngayDangKy;
     }
 
-    public KhachHangDTO(int maKH, String tenKH, String sdt,
-                        String email, String diaChi,
-                        int diemTichLuy, int trangThai) {
-        this.maKH = maKH;
-        this.tenKH = tenKH;
-        this.sdt = sdt;
-        this.email = email;
-        this.diaChi = diaChi;
-        this.diemTichLuy = diemTichLuy;
-        this.trangThai = trangThai;
-    }
+    // =========================================================================
+    // GETTERS & SETTERS
+    // =========================================================================
+    public int getMaKhachHang()               { return maKhachHang; }
+    public void setMaKhachHang(int v)         { this.maKhachHang = v; }
 
-    public int getMaKH() {
-        return maKH;
-    }
+    public String getTenKhachHang()           { return tenKhachHang; }
+    public void setTenKhachHang(String v)     { this.tenKhachHang = v; }
 
-    public void setMaKH(int maKH) {
-        this.maKH = maKH;
-    }
+    public String getSoDienThoai()            { return soDienThoai; }
+    public void setSoDienThoai(String v)      { this.soDienThoai = v; }
 
-    public String getTenKH() {
-        return tenKH;
-    }
+    public String getEmail()                  { return email; }
+    public void setEmail(String v)            { this.email = v; }
 
-    public void setTenKH(String tenKH) {
-        this.tenKH = tenKH;
-    }
+    public String getDiaChi()                 { return diaChi; }
+    public void setDiaChi(String v)           { this.diaChi = v; }
 
-    public String getSdt() {
-        return sdt;
-    }
+    public Date getNgaySinh()                 { return ngaySinh; }
+    public void setNgaySinh(Date v)           { this.ngaySinh = v; }
 
-    public void setSdt(String sdt) {
-        this.sdt = sdt;
-    }
+    public String getGioiTinh()               { return gioiTinh; }
+    public void setGioiTinh(String v)         { this.gioiTinh = v; }
 
-    public String getEmail() {
-        return email;
-    }
+    public int getDiemTichLuy()               { return diemTichLuy; }
+    public void setDiemTichLuy(int v)         { this.diemTichLuy = v; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public String getHangKhachHang()          { return hangKhachHang; }
+    public void setHangKhachHang(String v)    { this.hangKhachHang = v; }
 
-    public String getDiaChi() {
-        return diaChi;
-    }
+    public double getPhanTramGiam()           { return phanTramGiam; }
+    public void setPhanTramGiam(double v)     { this.phanTramGiam = v; }
 
-    public void setDiaChi(String diaChi) {
-        this.diaChi = diaChi;
-    }
-
-    public int getDiemTichLuy() {
-        return diemTichLuy;
-    }
-
-    public void setDiemTichLuy(int diemTichLuy) {
-        this.diemTichLuy = diemTichLuy;
-    }
-
-    public int getTrangThai() {
-        return trangThai;
-    }
-
-    public void setTrangThai(int trangThai) {
-        this.trangThai = trangThai;
-    }
+    public Date getNgayDangKy()               { return ngayDangKy; }
+    public void setNgayDangKy(Date v)         { this.ngayDangKy = v; }
 }
-

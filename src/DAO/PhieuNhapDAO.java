@@ -1,160 +1,244 @@
 package DAO;
 
 import DTO.PhieuNhapDTO;
-import DTO.PhieuNhapDTO.TrangThaiPhieuNhap;
-import util.DBConnection;
+import UTIL.DBConnection;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DAO thao tác với bảng PHIEUNHAP trong DB.
- * Tên cột DB: MaPN, MaNhaCungCap, MaNV, NgayNhap, TongTien, GhiChu, TrangThai
+ * DAO cho bảng PHIEUNHAP
+ * Thực hiện các thao tác CRUD với database
  */
 public class PhieuNhapDAO {
 
-    /* ================== INSERT ================== */
-    public boolean insert(PhieuNhapDTO pn) {
-        // Không truyền MaPN vì là IDENTITY tự tăng
-        String sql = "INSERT INTO PHIEUNHAP (MaNhaCungCap, MaNV, NgayNhap, TongTien, GhiChu, TrangThai) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+    // ----------------------------------------------------------------
+    // INSERT — Thêm phiếu nhập mới
+    // ----------------------------------------------------------------
+    public int insert(PhieuNhapDTO dto) throws SQLException {
+        String sql = "INSERT INTO PHIEUNHAP " +
+                     "(MaNhaCungCap, MaNV, NgayNhap, TongTien, GhiChu, TrangThai) " +
+                     "VALUES (?, ?, ?, ?, ?, ?)";
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql)) {
+        Connection conn = DBConnection.getConnection();
+        try (PreparedStatement ps = conn.prepareStatement(
+                sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            pst.setInt(1, pn.getMaNhaCungCap());
-            pst.setInt(2, pn.getMaNV());
-            pst.setDate(3, Date.valueOf(pn.getNgayNhap())); // LocalDate → java.sql.Date (DB là DATE)
-            pst.setBigDecimal(4, pn.getTongTien());
-            pst.setString(5, pn.getGhiChu());
-            pst.setString(6, pn.getTrangThaiDbValue()); // lưu chuỗi 'HoanThanh'/'Huy'
+            ps.setInt(1, dto.getMaNhaCungCap());
+            ps.setInt(2, dto.getMaNV());
 
-            return pst.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.err.println("Lỗi insert PhieuNhap: " + e.getMessage());
-        }
-        return false;
-    }
+            if (dto.getNgayNhap() != null)
+                ps.setDate(3, Date.valueOf(dto.getNgayNhap()));
+            else
+                ps.setDate(3, Date.valueOf(LocalDate.now()));
 
-    /* ================== INSERT — TRẢ VỀ MaPN VỪA TẠO ================== */
-    public int insertReturnKey(PhieuNhapDTO pn) {
-        String sql = "INSERT INTO PHIEUNHAP (MaNhaCungCap, MaNV, NgayNhap, TongTien, GhiChu, TrangThai) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+            if (dto.getTongTien() != null)
+                ps.setBigDecimal(4, dto.getTongTien());
+            else
+                ps.setNull(4, Types.DECIMAL);
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(5, dto.getGhiChu());
+            ps.setString(6, dto.getTrangThai() != null
+                             ? dto.getTrangThai() : "HoanThanh");
 
-            pst.setInt(1, pn.getMaNhaCungCap());
-            pst.setInt(2, pn.getMaNV());
-            pst.setDate(3, Date.valueOf(pn.getNgayNhap()));
-            pst.setBigDecimal(4, pn.getTongTien());
-            pst.setString(5, pn.getGhiChu());
-            pst.setString(6, pn.getTrangThaiDbValue());
+            ps.executeUpdate();
 
-            pst.executeUpdate();
-            try (ResultSet keys = pst.getGeneratedKeys()) {
-                if (keys.next()) return keys.getInt(1); // trả về MaPN vừa tạo
+            // Lấy MaPN vừa tạo (IDENTITY)
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) return rs.getInt(1);
             }
-        } catch (SQLException e) {
-            System.err.println("Lỗi insertReturnKey PhieuNhap: " + e.getMessage());
         }
         return -1;
     }
 
-    /* ================== CẬP NHẬT TRẠNG THÁI ================== */
-    public boolean updateTrangThai(int maPN, TrangThaiPhieuNhap trangThai) {
-        String sql = "UPDATE PHIEUNHAP SET TrangThai = ? WHERE MaPN = ?";
+    // ----------------------------------------------------------------
+    // SELECT ALL — Lấy tất cả phiếu nhập
+    // ----------------------------------------------------------------
+    public List<PhieuNhapDTO> getAll() throws SQLException {
+        String sql = "SELECT MaPN, MaNhaCungCap, MaNV, NgayNhap, " +
+                     "TongTien, GhiChu, TrangThai " +
+                     "FROM PHIEUNHAP " +
+                     "ORDER BY NgayNhap DESC";
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql)) {
+        List<PhieuNhapDTO> list = new ArrayList<>();
+        Connection conn = DBConnection.getConnection();
 
-            pst.setString(1, trangThai.getDbValue()); // lưu chuỗi khớp DB
-            pst.setInt(2, maPN);
-            return pst.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.err.println("Lỗi updateTrangThai PhieuNhap: " + e.getMessage());
-        }
-        return false;
-    }
-
-    /* ================== CẬP NHẬT TỔNG TIỀN ================== */
-    public boolean updateTongTien(int maPN, java.math.BigDecimal tongTien) {
-        String sql = "UPDATE PHIEUNHAP SET TongTien = ? WHERE MaPN = ?";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql)) {
-
-            pst.setBigDecimal(1, tongTien);
-            pst.setInt(2, maPN);
-            return pst.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.err.println("Lỗi updateTongTien: " + e.getMessage());
-        }
-        return false;
-    }
-
-    /* ================== LẤY THEO MaPN ================== */
-    public PhieuNhapDTO getById(int maPN) {
-        String sql = "SELECT * FROM PHIEUNHAP WHERE MaPN = ?";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql)) {
-
-            pst.setInt(1, maPN);
-            try (ResultSet rs = pst.executeQuery()) {
-                if (rs.next()) return mapResult(rs);
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(mapRow(rs));
             }
-        } catch (SQLException e) {
-            System.err.println("Lỗi getById PhieuNhap " + maPN + ": " + e.getMessage());
+        }
+        return list;
+    }
+
+    // ----------------------------------------------------------------
+    // SELECT BY ID — Lấy phiếu nhập theo MaPN
+    // ----------------------------------------------------------------
+    public PhieuNhapDTO getById(int maPN) throws SQLException {
+        String sql = "SELECT MaPN, MaNhaCungCap, MaNV, NgayNhap, " +
+                     "TongTien, GhiChu, TrangThai " +
+                     "FROM PHIEUNHAP WHERE MaPN = ?";
+
+        Connection conn = DBConnection.getConnection();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, maPN);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return mapRow(rs);
+            }
         }
         return null;
     }
 
-    /* ================== LẤY TẤT CẢ ================== */
-    public List<PhieuNhapDTO> getAll() {
+    // ----------------------------------------------------------------
+    // SELECT BY NHA CUNG CAP — Lấy phiếu nhập theo nhà cung cấp
+    // ----------------------------------------------------------------
+    public List<PhieuNhapDTO> getByNhaCungCap(int maNhaCungCap) throws SQLException {
+        String sql = "SELECT MaPN, MaNhaCungCap, MaNV, NgayNhap, " +
+                     "TongTien, GhiChu, TrangThai " +
+                     "FROM PHIEUNHAP WHERE MaNhaCungCap = ? " +
+                     "ORDER BY NgayNhap DESC";
+
         List<PhieuNhapDTO> list = new ArrayList<>();
-        String sql = "SELECT * FROM PHIEUNHAP ORDER BY MaPN DESC";
+        Connection conn = DBConnection.getConnection();
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql);
-             ResultSet rs = pst.executeQuery()) {
-
-            while (rs.next()) list.add(mapResult(rs));
-        } catch (SQLException e) {
-            System.err.println("Lỗi getAll PhieuNhap: " + e.getMessage());
-        }
-        return list;
-    }
-
-    /* ================== LẤY THEO TRẠNG THÁI ================== */
-    public List<PhieuNhapDTO> getByTrangThai(TrangThaiPhieuNhap trangThai) {
-        List<PhieuNhapDTO> list = new ArrayList<>();
-        String sql = "SELECT * FROM PHIEUNHAP WHERE TrangThai = ? ORDER BY MaPN DESC";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql)) {
-
-            pst.setString(1, trangThai.getDbValue());
-            try (ResultSet rs = pst.executeQuery()) {
-                while (rs.next()) list.add(mapResult(rs));
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, maNhaCungCap);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
             }
-        } catch (SQLException e) {
-            System.err.println("Lỗi getByTrangThai PhieuNhap: " + e.getMessage());
         }
         return list;
     }
 
-    /* ================== MAP RESULT ================== */
-    private PhieuNhapDTO mapResult(ResultSet rs) throws SQLException {
-        return new PhieuNhapDTO(
-                rs.getInt("MaPN"),
-                rs.getInt("MaNV"),
-                rs.getInt("MaNhaCungCap"),
-                rs.getDate("NgayNhap").toLocalDate(),           // java.sql.Date → LocalDate
-                rs.getBigDecimal("TongTien"),
-                rs.getString("GhiChu"),
-                TrangThaiPhieuNhap.fromDbValue(rs.getString("TrangThai"))
-        );
+    // ----------------------------------------------------------------
+    // SELECT BY TRANG THAI — Lấy phiếu nhập theo trạng thái
+    // ----------------------------------------------------------------
+    public List<PhieuNhapDTO> getByTrangThai(String trangThai) throws SQLException {
+        String sql = "SELECT MaPN, MaNhaCungCap, MaNV, NgayNhap, " +
+                     "TongTien, GhiChu, TrangThai " +
+                     "FROM PHIEUNHAP WHERE TrangThai = ? " +
+                     "ORDER BY NgayNhap DESC";
+
+        List<PhieuNhapDTO> list = new ArrayList<>();
+        Connection conn = DBConnection.getConnection();
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, trangThai);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
+            }
+        }
+        return list;
+    }
+
+    // ----------------------------------------------------------------
+    // SELECT BY KHOANG NGAY — Lấy phiếu nhập theo khoảng ngày
+    // ----------------------------------------------------------------
+    public List<PhieuNhapDTO> getByKhoangNgay(LocalDate tuNgay,
+                                               LocalDate denNgay) throws SQLException {
+        String sql = "SELECT MaPN, MaNhaCungCap, MaNV, NgayNhap, " +
+                     "TongTien, GhiChu, TrangThai " +
+                     "FROM PHIEUNHAP " +
+                     "WHERE NgayNhap BETWEEN ? AND ? " +
+                     "ORDER BY NgayNhap DESC";
+
+        List<PhieuNhapDTO> list = new ArrayList<>();
+        Connection conn = DBConnection.getConnection();
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setDate(1, Date.valueOf(tuNgay));
+            ps.setDate(2, Date.valueOf(denNgay));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
+            }
+        }
+        return list;
+    }
+
+    // ----------------------------------------------------------------
+    // UPDATE TONG TIEN — Cập nhật TongTien sau khi có chi tiết
+    // ----------------------------------------------------------------
+    public boolean updateTongTien(int maPN) throws SQLException {
+        String sql = "UPDATE PHIEUNHAP " +
+                     "SET TongTien = ( " +
+                     "    SELECT ISNULL(SUM(ThanhTien), 0) " +
+                     "    FROM CHITIETPHIEUNHAP WHERE MaPN = ? " +
+                     ") " +
+                     "WHERE MaPN = ?";
+
+        Connection conn = DBConnection.getConnection();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, maPN);
+            ps.setInt(2, maPN);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // HUY PHIEU NHAP — Cập nhật TrangThai = 'Huy'
+    // Trigger trg_PhieuNhap_Huy sẽ tự động hoàn tác tồn kho
+    // ----------------------------------------------------------------
+    public boolean huyPhieuNhap(int maPN) throws SQLException {
+        String sql = "UPDATE PHIEUNHAP SET TrangThai = N'Huy' WHERE MaPN = ?";
+
+        Connection conn = DBConnection.getConnection();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, maPN);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // DELETE — Xóa phiếu nhập (chỉ xóa khi chưa có chi tiết)
+    // ----------------------------------------------------------------
+    public boolean delete(int maPN) throws SQLException {
+        String sql = "DELETE FROM PHIEUNHAP WHERE MaPN = ? " +
+                     "AND NOT EXISTS (" +
+                     "    SELECT 1 FROM CHITIETPHIEUNHAP WHERE MaPN = ?" +
+                     ")";
+
+        Connection conn = DBConnection.getConnection();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, maPN);
+            ps.setInt(2, maPN);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Helper: Map ResultSet → DTO
+    // ----------------------------------------------------------------
+    private PhieuNhapDTO mapRow(ResultSet rs) throws SQLException {
+        PhieuNhapDTO dto = new PhieuNhapDTO();
+        dto.setMaPN(rs.getInt("MaPN"));
+        dto.setMaNhaCungCap(rs.getInt("MaNhaCungCap"));
+        dto.setMaNV(rs.getInt("MaNV"));
+
+        Date ngayNhap = rs.getDate("NgayNhap");
+        if (ngayNhap != null) dto.setNgayNhap(ngayNhap.toLocalDate());
+
+        dto.setTongTien(rs.getBigDecimal("TongTien"));
+        dto.setGhiChu(rs.getString("GhiChu"));
+        dto.setTrangThai(rs.getString("TrangThai"));
+        return dto;
+    }
+
+    public boolean updateTrangThai(int maPN, String trangThaiMoi) {
+        // Tùy thuộc vào class kết nối DB của bạn tên là DBConnection hay JDBCUtil
+        String sql = "UPDATE PHIEUNHAP SET TrangThai = ? WHERE MaPN = ?";
+        try (Connection con = DBConnection.getConnection(); 
+            PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, trangThaiMoi);
+            ps.setInt(2, maPN);
+            
+            return ps.executeUpdate() > 0;
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

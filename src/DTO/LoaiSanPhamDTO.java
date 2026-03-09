@@ -1,29 +1,28 @@
 package DTO;
 
 public class LoaiSanPhamDTO {
-    private int maLoai;
+    private int    maLoai;
     private String tenLoai;
     private String moTa;
-    private boolean coQuanLyIMEI;
 
     public LoaiSanPhamDTO() {}
 
-    public LoaiSanPhamDTO(int maLoai, String tenLoai, String moTa, boolean coQuanLyIMEI) {
-        this.maLoai = maLoai;
+    public LoaiSanPhamDTO(int maLoai, String tenLoai, String moTa) {
+        this.maLoai  = maLoai;
         this.tenLoai = tenLoai;
-        this.moTa = moTa;
-        this.coQuanLyIMEI = coQuanLyIMEI;
+        this.moTa    = moTa;
     }
 
-    public int getMaLoai() { return maLoai; }
-    public void setMaLoai(int maLoai) { this.maLoai = maLoai; }
-
+    public int    getMaLoai()  { return maLoai; }
     public String getTenLoai() { return tenLoai; }
+    public String getMoTa()    { return moTa; }
+
+    public void setMaLoai(int maLoai)      { this.maLoai  = maLoai; }
     public void setTenLoai(String tenLoai) { this.tenLoai = tenLoai; }
+    public void setMoTa(String moTa)       { this.moTa    = moTa; }
 
-    public String getMoTa() { return moTa; }
-    public void setMoTa(String moTa) { this.moTa = moTa; }
-
-    public boolean isCoQuanLyIMEI() { return coQuanLyIMEI; }
-    public void setCoQuanLyIMEI(boolean coQuanLyIMEI) { this.coQuanLyIMEI = coQuanLyIMEI; }
+    @Override
+    public String toString() {
+        return tenLoai != null ? tenLoai : "";
+    }
 }

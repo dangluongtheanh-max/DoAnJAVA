@@ -1,6 +1,8 @@
 package DAO;
 
 import DTO.NhanVienDTO;
+import UTIL.DBConnection;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -141,12 +143,14 @@ public class NhanVienDAO {
     }
 
     // =========================================================================
-    // XÓA NHÂN VIÊN
+    // XÓA MỀM NHÂN VIÊN
+    // Không DELETE thật — chỉ đổi trangThai → "NghiViec" để giữ lịch sử.
+    // Gọi khi bấm nút "Xóa" trên GUI hoặc khi NV chính thức nghỉ việc.
     // =========================================================================
     public boolean delete(int maNV) {
-        String sql = "DELETE FROM NhanVien WHERE maNV=?";
+        String sql = "UPDATE NhanVien SET trangThai = N'NghiViec' WHERE maNV = ?";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, maNV);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) { e.printStackTrace(); return false; }

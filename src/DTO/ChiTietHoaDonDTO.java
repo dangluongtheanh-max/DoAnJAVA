@@ -3,82 +3,75 @@ package DTO;
 import java.math.BigDecimal;
 
 public class ChiTietHoaDonDTO {
-    private int maHD;
+
+    private int maChiTiet;
+    private int maHoaDon;
     private int maSP;
-    private Integer maImei; // NULL nếu không có IMEI
+    private int maSerial;       // KHÔNG NULL trong DB — bắt buộc phải có
     private int soLuong;
     private BigDecimal donGia;
-    private BigDecimal thanhTien;
-    private int trangThai;
+    private BigDecimal thanhTien; // Computed column, chỉ đọc
+    // BỔ SUNG 09/03/2026 — field tạm để hiển thị, không INSERT vào DB
+    private String tenSP;
 
-    public ChiTietHoaDonDTO() {
+    public ChiTietHoaDonDTO() {}
+
+    // Constructor dùng khi INSERT
+    public ChiTietHoaDonDTO(int maHoaDon, int maSP, int maSerial,
+                             int soLuong, BigDecimal donGia) {
+        this.maHoaDon = maHoaDon;
+        this.maSP = maSP;
+        this.maSerial = maSerial;
+        this.soLuong = soLuong;
+        this.donGia = donGia;
     }
 
-    public ChiTietHoaDonDTO(int maHD, int maSP, Integer maImei,
-                       int soLuong, BigDecimal donGia,
-                       BigDecimal thanhTien, int trangThai) {
-        this.maHD = maHD;
+    // Constructor đầy đủ dùng khi đọc từ DB
+    public ChiTietHoaDonDTO(int maChiTiet, int maHoaDon, int maSP,
+                             int maSerial, int soLuong,
+                             BigDecimal donGia, BigDecimal thanhTien) {
+        this.maChiTiet = maChiTiet;
+        this.maHoaDon = maHoaDon;
         this.maSP = maSP;
-        this.maImei = maImei;
+        this.maSerial = maSerial;
         this.soLuong = soLuong;
         this.donGia = donGia;
         this.thanhTien = thanhTien;
-        this.trangThai = trangThai;
     }
 
-    public int getMaHD() {
-        return maHD;
-    }
+    // ── Getters & Setters ──────────────────────────────────────────────────────
 
-    public void setMaHD(int maHD) {
-        this.maHD = maHD;
-    }
+    public int getMaChiTiet() { return maChiTiet; }
+    public void setMaChiTiet(int maChiTiet) { this.maChiTiet = maChiTiet; }
 
-    public int getMaSP() {
-        return maSP;
-    }
+    public int getMaHoaDon() { return maHoaDon; }
+    public void setMaHoaDon(int maHoaDon) { this.maHoaDon = maHoaDon; }
 
-    public void setMaSP(int maSP) {
-        this.maSP = maSP;
-    }
+    public int getMaSP() { return maSP; }
+    public void setMaSP(int maSP) { this.maSP = maSP; }
 
-    public Integer getMaImei() {
-        return maImei;
-    }
+    public int getMaSerial() { return maSerial; }
+    public void setMaSerial(int maSerial) { this.maSerial = maSerial; }
 
-    public void setMaImei(Integer maImei) {
-        this.maImei = maImei;
-    }
+    public int getSoLuong() { return soLuong; }
+    public void setSoLuong(int soLuong) { this.soLuong = soLuong; }
 
-    public int getSoLuong() {
-        return soLuong;
-    }
+    public BigDecimal getDonGia() { return donGia; }
+    public void setDonGia(BigDecimal donGia) { this.donGia = donGia; }
 
-    public void setSoLuong(int soLuong) {
-        this.soLuong = soLuong;
-    }
+    public BigDecimal getThanhTien() { return thanhTien; }
+    public void setThanhTien(BigDecimal thanhTien) { this.thanhTien = thanhTien; }
 
-    public BigDecimal getDonGia() {
-        return donGia;
-    }
-
-    public void setDonGia(BigDecimal donGia) {
-        this.donGia = donGia;
-    }
-
-    public BigDecimal getThanhTien() {
-        return thanhTien;
-    }
-
-    public void setThanhTien(BigDecimal thanhTien) {
-        this.thanhTien = thanhTien;
-    }
-
-    public int getTrangThai() {
-        return trangThai;
-    }
-
-    public void setTrangThai(int trangThai) {
-        this.trangThai = trangThai;
+    public String getTenSP() { return tenSP; }
+    public void setTenSP(String tenSP) { this.tenSP = tenSP; }
+    @Override
+    public String toString() {
+        return "ChiTietHoaDonDTO{maChiTiet=" + maChiTiet +
+               ", maHoaDon=" + maHoaDon +
+               ", maSP=" + maSP +
+               ", maSerial=" + maSerial +
+               ", soLuong=" + soLuong +
+               ", donGia=" + donGia +
+               ", thanhTien=" + thanhTien + "}";
     }
 }

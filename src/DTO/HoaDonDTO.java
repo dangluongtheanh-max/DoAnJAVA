@@ -4,113 +4,97 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class HoaDonDTO {
-    private int maHD;
-    private int maCH;
-    private int maKH;
+
+    private int maHoaDon;
+    private Integer maKhachHang;      // nullable
     private int maNV;
     private LocalDateTime ngayLap;
     private BigDecimal tongTienHang;
-    private BigDecimal giamGia;
-    private BigDecimal thueVAT;
+    private BigDecimal phanTramGiamHang;
+    // Computed columns (chỉ đọc từ DB, không INSERT)
+    private BigDecimal tienGiamHang;
+    private BigDecimal tienTruocVAT;
+    private BigDecimal tienVAT;
     private BigDecimal tongThanhToan;
-    private int trangThai;
+    private String ghiChu;
+    private String trangThai;
 
-    public HoaDonDTO() {
+    public HoaDonDTO() {}
+
+    // Constructor dùng khi tạo mới hóa đơn (INSERT)
+    public HoaDonDTO(Integer maKhachHang, int maNV, BigDecimal phanTramGiamHang, String ghiChu) {
+        this.maKhachHang = maKhachHang;
+        this.maNV = maNV;
+        this.phanTramGiamHang = phanTramGiamHang != null ? phanTramGiamHang : BigDecimal.ZERO;
+        this.ghiChu = ghiChu;
+        this.trangThai = "HoanThanh";
     }
 
-    public HoaDonDTO(int maHD, int maCH, int maKH, int maNV,
+    // Constructor đầy đủ dùng khi đọc từ DB
+    public HoaDonDTO(int maHoaDon, Integer maKhachHang, int maNV,
                      LocalDateTime ngayLap, BigDecimal tongTienHang,
-                     BigDecimal giamGia, BigDecimal thueVAT,
-                     BigDecimal tongThanhToan, int trangThai) {
-        this.maHD = maHD;
-        this.maCH = maCH;
-        this.maKH = maKH;
+                     BigDecimal phanTramGiamHang, BigDecimal tienGiamHang,
+                     BigDecimal tienTruocVAT, BigDecimal tienVAT,
+                     BigDecimal tongThanhToan, String ghiChu, String trangThai) {
+        this.maHoaDon = maHoaDon;
+        this.maKhachHang = maKhachHang;
         this.maNV = maNV;
         this.ngayLap = ngayLap;
         this.tongTienHang = tongTienHang;
-        this.giamGia = giamGia;
-        this.thueVAT = thueVAT;
+        this.phanTramGiamHang = phanTramGiamHang;
+        this.tienGiamHang = tienGiamHang;
+        this.tienTruocVAT = tienTruocVAT;
+        this.tienVAT = tienVAT;
         this.tongThanhToan = tongThanhToan;
+        this.ghiChu = ghiChu;
         this.trangThai = trangThai;
     }
 
-    public int getMaHD() {
-        return maHD;
-    }
+    // ── Getters & Setters ──────────────────────────────────────────────────────
 
-    public void setMaHD(int maHD) {
-        this.maHD = maHD;
-    }
+    public int getMaHoaDon() { return maHoaDon; }
+    public void setMaHoaDon(int maHoaDon) { this.maHoaDon = maHoaDon; }
 
-    public int getMaCH() {
-        return maCH;
-    }
+    public Integer getMaKhachHang() { return maKhachHang; }
+    public void setMaKhachHang(Integer maKhachHang) { this.maKhachHang = maKhachHang; }
 
-    public void setMaCH(int maCH) {
-        this.maCH = maCH;
-    }
+    public int getMaNV() { return maNV; }
+    public void setMaNV(int maNV) { this.maNV = maNV; }
 
-    public int getMaKH() {
-        return maKH;
-    }
+    public LocalDateTime getNgayLap() { return ngayLap; }
+    public void setNgayLap(LocalDateTime ngayLap) { this.ngayLap = ngayLap; }
 
-    public void setMaKH(int maKH) {
-        this.maKH = maKH;
-    }
+    public BigDecimal getTongTienHang() { return tongTienHang; }
+    public void setTongTienHang(BigDecimal tongTienHang) { this.tongTienHang = tongTienHang; }
 
-    public int getMaNV() {
-        return maNV;
-    }
+    public BigDecimal getPhanTramGiamHang() { return phanTramGiamHang; }
+    public void setPhanTramGiamHang(BigDecimal phanTramGiamHang) { this.phanTramGiamHang = phanTramGiamHang; }
 
-    public void setMaNV(int maNV) {
-        this.maNV = maNV;
-    }
+    public BigDecimal getTienGiamHang() { return tienGiamHang; }
+    public void setTienGiamHang(BigDecimal tienGiamHang) { this.tienGiamHang = tienGiamHang; }
 
-    public LocalDateTime getNgayLap() {
-        return ngayLap;
-    }
+    public BigDecimal getTienTruocVAT() { return tienTruocVAT; }
+    public void setTienTruocVAT(BigDecimal tienTruocVAT) { this.tienTruocVAT = tienTruocVAT; }
 
-    public void setNgayLap(LocalDateTime ngayLap) {
-        this.ngayLap = ngayLap;
-    }
+    public BigDecimal getTienVAT() { return tienVAT; }
+    public void setTienVAT(BigDecimal tienVAT) { this.tienVAT = tienVAT; }
 
-    public BigDecimal getTongTienHang() {
-        return tongTienHang;
-    }
+    public BigDecimal getTongThanhToan() { return tongThanhToan; }
+    public void setTongThanhToan(BigDecimal tongThanhToan) { this.tongThanhToan = tongThanhToan; }
 
-    public void setTongTienHang(BigDecimal tongTienHang) {
-        this.tongTienHang = tongTienHang;
-    }
+    public String getGhiChu() { return ghiChu; }
+    public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
 
-    public BigDecimal getGiamGia() {
-        return giamGia;
-    }
+    public String getTrangThai() { return trangThai; }
+    public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
 
-    public void setGiamGia(BigDecimal giamGia) {
-        this.giamGia = giamGia;
-    }
-
-    public BigDecimal getThueVAT() {
-        return thueVAT;
-    }
-
-    public void setThueVAT(BigDecimal thueVAT) {
-        this.thueVAT = thueVAT;
-    }
-
-    public BigDecimal getTongThanhToan() {
-        return tongThanhToan;
-    }
-
-    public void setTongThanhToan(BigDecimal tongThanhToan) {
-        this.tongThanhToan = tongThanhToan;
-    }
-
-    public int getTrangThai() {
-        return trangThai;
-    }
-
-    public void setTrangThai(int trangThai) {
-        this.trangThai = trangThai;
+    @Override
+    public String toString() {
+        return "HoaDonDTO{maHoaDon=" + maHoaDon +
+               ", maKhachHang=" + maKhachHang +
+               ", maNV=" + maNV +
+               ", ngayLap=" + ngayLap +
+               ", tongThanhToan=" + tongThanhToan +
+               ", trangThai='" + trangThai + "'}";
     }
 }

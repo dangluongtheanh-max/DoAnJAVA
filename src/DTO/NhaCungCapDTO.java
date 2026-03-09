@@ -69,4 +69,7 @@ public class NhaCungCapDTO {
         this.trangThai = trangThai;
     }
 
+    public String toString() {
+        return tenNCC != null ? tenNCC : "";
+    }
 }
