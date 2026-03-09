@@ -4,8 +4,6 @@ import DAO.ChiTietHoaDonDAO;
 import DAO.HoaDonDAO;
 import DTO.ChiTietHoaDonDTO;
 import DTO.HoaDonDTO;
-import DTO.KhachHangDTO;
-import DTO.NhanVienDTO;
 import UTIL.DBConnection;
 
 import java.math.BigDecimal;
@@ -72,21 +70,47 @@ public class HoaDonBUS {
             throw new Exception("Tổng thanh toán không hợp lệ!");
         }
 
-        // 1. Cập nhật % giảm giá lên HOADON (nếu có)
+        // 1. UPDATE TongTienHang = SUM(ThanhTien) từ CHITIETHOADON
+        //    taoHoaDon() INSERT với TongTienHang=0 → bước này điền giá trị thật
+        //    Sau đó SQL Server tự tính lại các computed columns:
+        //    TienGiamHang / TienTruocVAT / TienVAT / TongThanhToan
+        capNhatTongTienHangTuChiTiet(maHoaDon);
+
+        // 2. Cập nhật % giảm giá lên HOADON (nếu có)
         if (tienGiam != null && tienGiam.compareTo(BigDecimal.ZERO) > 0) {
             HoaDonDAO.capNhatPhanTramGiam(maHoaDon, tienGiam);
         }
 
-        // 2. Lưu bản ghi thanh toán vào bảng THANHTOAN
+        // 3. Lưu bản ghi thanh toán vào bảng THANHTOAN
         boolean luuOK = luuThanhToan(maHoaDon, tongThanhToan, phuongThuc);
         if (!luuOK) {
             throw new Exception("Không lưu được thông tin thanh toán!");
         }
 
-        // 3. Cập nhật trạng thái hóa đơn → HoanThanh
+        // 4. Cập nhật trạng thái hóa đơn → HoanThanh
         boolean ttOK = HoaDonDAO.updateTrangThai(maHoaDon, "HoanThanh");
         if (!ttOK) {
             throw new Exception("Không cập nhật được trạng thái hóa đơn!");
+        }
+    }
+
+    // =========================================================================
+    // PRIVATE: tổng hợp TongTienHang = SUM(ThanhTien) từ CHITIETHOADON
+    // rồi UPDATE vào HOADON — buộc SQL Server tính lại computed columns
+    // =========================================================================
+    private void capNhatTongTienHangTuChiTiet(int maHoaDon) throws Exception {
+        String sql =
+            "UPDATE HOADON SET TongTienHang = (" +
+            "    SELECT ISNULL(SUM(ThanhTien), 0) FROM CHITIETHOADON WHERE MaHoaDon = ?" +
+            ") WHERE MaHoaDon = ?";
+        try (Connection cn = DBConnection.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setInt(1, maHoaDon);
+            ps.setInt(2, maHoaDon);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            throw new Exception("Không thể cập nhật TongTienHang cho hóa đơn #"
+                    + maHoaDon + ": " + e.getMessage());
         }
     }
 
@@ -241,6 +265,21 @@ public class HoaDonBUS {
         kiemTraChoPhepChinhSua(trangThaiHoaDon);
         if (!HoaDonDAO.deleteChiTiet(maChiTiet))
             throw new Exception("X\u00f3a chi ti\u1ebft th\u1ea5t b\u1ea1i, vui l\u00f2ng th\u1eed l\u1ea1i!");
+    }
+
+    // Xóa toàn bộ chi tiết của 1 hóa đơn (dùng khi sửa đơn chờ)
+    // Trigger trg_ChiTietHoaDon_AfterDelete tự hoàn trả kho + serial cho từng dòng
+    public void xoaChiTietHoaDon(int maHoaDon) throws Exception {
+        java.sql.Connection cn = DBConnection.getConnection();
+        try {
+            java.sql.PreparedStatement ps = cn.prepareStatement(
+                "DELETE FROM CHITIETHOADON WHERE MaHoaDon = ?");
+            ps.setInt(1, maHoaDon);
+            ps.executeUpdate();
+            ps.close();
+        } catch (Exception ex) {
+            throw new Exception("Kh\u00f4ng th\u1ec3 x\u00f3a chi ti\u1ebft h\u00f3a \u0111\u01a1n #" + maHoaDon + ": " + ex.getMessage());
+        }
     }
 
     // Hủy đơn chờ (ChoXuLy → Huy)
