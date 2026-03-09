@@ -15,6 +15,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
@@ -37,10 +39,20 @@ public class ThongKeGUI extends JPanel {
     private final ThongKeBUS tkBUS = new ThongKeBUS();
 
     // ─── Tab: Doanh thu theo tháng ──────────────────────────────────────────
+    private JTable tableTheoNam;
+    private DefaultTableModel modelTheoNam;
+    private RevenueBarChartPanel chartPanelTheoNam;
+
     private JComboBox<String> cbNam;
     private JTable tableTheoThang;
     private DefaultTableModel modelTheoThang;
     private RevenueBarChartPanel chartPanelTheoThang;
+
+    private JComboBox<String> cbNamNgayTrongThang;
+    private JComboBox<String> cbThangNgayTrongThang;
+    private JTable tableTheoNgayTrongThang;
+    private DefaultTableModel modelTheoNgayTrongThang;
+    private RevenueBarChartPanel chartPanelTheoNgayTrongThang;
 
     // ─── Tab: Doanh thu từ ngày đến ngày ────────────────────────────────────
     private JComboBox<String> DoanhThuCbThoiGian;
@@ -72,6 +84,15 @@ public class ThongKeGUI extends JPanel {
     private JTable TableThoiGian;
     private DefaultTableModel modelThoiGian;
 
+    // ─── Tab: Doanh số theo nhân viên ───────────────────────────────────────
+    private JComboBox<String> cbThoiGianNhanVien;
+    private JComboBox<String> cbMaNhanVien;
+    private JSpinner nvSpinnerBatDau;
+    private JSpinner nvSpinnerKetThuc;
+    private JTable tableNhanVien;
+    private DefaultTableModel modelNhanVien;
+    private boolean updatingNhanVienCombo = false;
+
     // ─── Spinner date format ─────────────────────────────────────────────────
     private static final String DATE_FORMAT = "dd/MM/yyyy";
 
@@ -80,15 +101,7 @@ public class ThongKeGUI extends JPanel {
         setLayout(new BorderLayout());
         setBackground(CONTENT_BG);
         setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
-
-        // Tiêu đề
-        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        titlePanel.setBackground(CONTENT_BG);
-        JLabel lblTitle = new JLabel("Thống kê");
-        lblTitle.setFont(FONT_TITLE);
-        lblTitle.setForeground(PRIMARY);
-        titlePanel.add(lblTitle);
-        add(titlePanel, BorderLayout.NORTH);
+        add(buildHeader(), BorderLayout.NORTH);
 
         // Tab chính
         JTabbedPane mainTabs = new JTabbedPane();
@@ -96,15 +109,58 @@ public class ThongKeGUI extends JPanel {
         mainTabs.addTab("Doanh thu",        buildDoanhThuPanel());
         mainTabs.addTab("Bán hàng",         buildBanHangPanel());
         mainTabs.addTab("Hóa đơn theo TG",  buildHoaDonPanel());
+        mainTabs.addTab("Nhân viên",        buildNhanVienPanel());
+        mainTabs.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
         add(mainTabs, BorderLayout.CENTER);
 
         // Load dữ liệu mặc định
+        loadTheoNam();
         loadTheoThang();
+        loadTheoNgayTrongThang();
         loadTuNgayDenNgay();
         loadSanPham();
         loadTheLoai();
         loadHoaDon();
+        loadNhanVien();
+    }
+
+    private JPanel buildHeader() {
+        JPanel wrap = new JPanel(new BorderLayout());
+        wrap.setOpaque(false);
+        wrap.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
+
+        JPanel header = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int arc = 18;
+
+                // Shadow nhẹ dưới header
+                g2.setColor(new Color(0, 0, 0, 18));
+                g2.fillRoundRect(2, 3, getWidth() - 4, getHeight() - 3, arc, arc);
+
+                // Nền gradient bo góc
+                g2.setPaint(new GradientPaint(0, 0, PRIMARY_DARK, getWidth(), 0, PRIMARY));
+                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
+
+                // Viền mảnh
+                g2.setColor(new Color(255, 255, 255, 35));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
+                g2.dispose();
+            }
+        };
+        header.setOpaque(false);
+        header.setBorder(BorderFactory.createEmptyBorder(14, 20, 14, 20));
+
+        JLabel title = new JLabel("QUẢN LÝ THỐNG KÊ");
+        title.setFont(FONT_TITLE);
+        title.setForeground(Color.WHITE);
+        header.add(title, BorderLayout.WEST);
+
+        wrap.add(header, BorderLayout.CENTER);
+        return wrap;
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -116,9 +172,44 @@ public class ThongKeGUI extends JPanel {
 
         JTabbedPane subTabs = new JTabbedPane();
         styleTabbedPane(subTabs);
+        subTabs.addTab("Theo năm",            buildTheoNamPanel());
         subTabs.addTab("Theo tháng trong năm", buildTheoThangPanel());
+        subTabs.addTab("Từng ngày trong tháng", buildTheoNgayTrongThangPanel());
         subTabs.addTab("Từ ngày đến ngày",      buildTuNgayDenNgayPanel());
         panel.add(subTabs, BorderLayout.CENTER);
+        return panel;
+    }
+
+    // ── Sub-tab: Doanh thu theo năm ─────────────────────────────────────────
+    private JPanel buildTheoNamPanel() {
+        JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.setBackground(CARD_BG);
+        panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        styleToolbar(toolbar);
+        toolbar.add(new JLabel("Doanh thu theo năm"));
+
+        JButton btnExcel = makeButton("Xuất Excel");
+        JButton btnPdf = makeButton("In PDF");
+        btnExcel.addActionListener(e -> exportExcel(tableTheoNam, "Doanh thu theo năm"));
+        btnPdf.addActionListener(e -> exportPdf(tableTheoNam, "Doanh thu theo năm"));
+        toolbar.add(Box.createHorizontalStrut(20));
+        toolbar.add(btnExcel);
+        toolbar.add(btnPdf);
+
+        modelTheoNam = new DefaultTableModel(
+                new String[]{"Năm", "Vốn", "Doanh thu", "Lợi nhuận"}, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        tableTheoNam = new JTable(modelTheoNam);
+        styleTable(tableTheoNam);
+
+        chartPanelTheoNam = new RevenueBarChartPanel();
+
+        panel.add(toolbar, BorderLayout.NORTH);
+        panel.add(createTableScrollPane(tableTheoNam), BorderLayout.CENTER);
+        panel.add(chartPanelTheoNam, BorderLayout.SOUTH);
         return panel;
     }
 
@@ -168,6 +259,54 @@ public class ThongKeGUI extends JPanel {
             return Integer.parseInt(cbNam.getSelectedItem().toString());
         }
         return java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
+    }
+
+    // ── Sub-tab: Doanh thu từng ngày trong tháng ────────────────────────────
+    private JPanel buildTheoNgayTrongThangPanel() {
+        JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.setBackground(CARD_BG);
+        panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        styleToolbar(toolbar);
+
+        toolbar.add(new JLabel("Năm:"));
+        cbNamNgayTrongThang = new JComboBox<>(buildYearItems());
+        styleComboBox(cbNamNgayTrongThang);
+        cbNamNgayTrongThang.addActionListener(e -> loadTheoNgayTrongThang());
+        toolbar.add(cbNamNgayTrongThang);
+
+        toolbar.add(new JLabel("Tháng:"));
+        cbThangNgayTrongThang = new JComboBox<>(buildMonthItems());
+        styleComboBox(cbThangNgayTrongThang);
+        cbThangNgayTrongThang.addActionListener(e -> loadTheoNgayTrongThang());
+        toolbar.add(cbThangNgayTrongThang);
+
+        JButton btnExcel = makeButton("Xuất Excel");
+        JButton btnPdf = makeButton("In PDF");
+        btnExcel.addActionListener(e -> exportExcel(tableTheoNgayTrongThang, "Doanh thu từng ngày trong tháng"));
+        btnPdf.addActionListener(e -> exportPdf(tableTheoNgayTrongThang, "Doanh thu từng ngày trong tháng"));
+        toolbar.add(Box.createHorizontalStrut(20));
+        toolbar.add(btnExcel);
+        toolbar.add(btnPdf);
+
+        modelTheoNgayTrongThang = new DefaultTableModel(
+                new String[]{"Ngày", "Vốn", "Doanh thu", "Lợi nhuận"}, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        tableTheoNgayTrongThang = new JTable(modelTheoNgayTrongThang);
+        styleTable(tableTheoNgayTrongThang);
+
+        chartPanelTheoNgayTrongThang = new RevenueBarChartPanel();
+
+        // Mặc định là tháng hiện tại
+        int currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1;
+        cbThangNgayTrongThang.setSelectedItem(String.format("%02d", currentMonth));
+
+        panel.add(toolbar, BorderLayout.NORTH);
+        panel.add(createTableScrollPane(tableTheoNgayTrongThang), BorderLayout.CENTER);
+        panel.add(chartPanelTheoNgayTrongThang, BorderLayout.SOUTH);
+        return panel;
     }
 
     private static class RevenueBarChartPanel extends JPanel {
@@ -242,11 +381,15 @@ public class ThongKeGUI extends JPanel {
                     g2.setColor(colorLoiNhuan);
                     g2.fillRect(gx + 2 * barW, top + chartH - hLoiNhuan, barW, hLoiNhuan);
 
-                    if (groups <= 12) {
+                    int stride = (groups <= 12) ? 1 : Math.max(1, (int) Math.ceil(groups / 10.0));
+                    if (i % stride == 0 || i == groups - 1) {
                         g2.setColor(new Color(110, 110, 110));
-                        String label = d.getThoiGian();
-                        if (label.length() > 8) label = label.substring(0, 8);
-                        g2.drawString(label, gx - 2, top + chartH + 16);
+                        String label = formatXAxisLabel(d.getThoiGian(), groups);
+                        int textX = gx - 2;
+                        if (groups > 12) {
+                            textX = gx;
+                        }
+                        g2.drawString(label, textX, top + chartH + 16);
                     }
                 }
             }
@@ -265,6 +408,21 @@ public class ThongKeGUI extends JPanel {
             g2.fillOval(x, y - 8, 8, 8);
             g2.setColor(new Color(100, 100, 100));
             g2.drawString(text, x + 12, y);
+        }
+
+        // Nếu dữ liệu dày (theo ngày trong tháng), chỉ giữ số ngày để trục X gọn và dễ đọc.
+        private String formatXAxisLabel(String thoiGian, int groups) {
+            if (thoiGian == null) return "";
+            if (groups > 12 && thoiGian.contains("/")) {
+                String[] parts = thoiGian.split("/");
+                if (parts.length >= 1) {
+                    return parts[0];
+                }
+            }
+            if (groups <= 12 && thoiGian.length() > 8) {
+                return thoiGian.substring(0, 8);
+            }
+            return thoiGian;
         }
     }
 
@@ -497,6 +655,67 @@ public class ThongKeGUI extends JPanel {
     }
 
     // ════════════════════════════════════════════════════════════════════════
+    //  PANEL: DOANH SỐ THEO NHÂN VIÊN
+    // ════════════════════════════════════════════════════════════════════════
+    private JPanel buildNhanVienPanel() {
+        JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.setBackground(CARD_BG);
+        panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        styleToolbar(toolbar);
+        toolbar.add(new JLabel("Khoảng thời gian:"));
+
+        cbThoiGianNhanVien = buildThoiGianComboBox();
+        styleComboBox(cbThoiGianNhanVien);
+        toolbar.add(cbThoiGianNhanVien);
+
+        toolbar.add(new JLabel("Mã NV:"));
+        cbMaNhanVien = new JComboBox<>(new String[]{"Tất cả"});
+        styleComboBox(cbMaNhanVien);
+        toolbar.add(cbMaNhanVien);
+
+        nvSpinnerBatDau = buildDateSpinner();
+        nvSpinnerKetThuc = buildDateSpinner();
+        toolbar.add(new JLabel("Từ:"));
+        toolbar.add(nvSpinnerBatDau);
+        toolbar.add(new JLabel("Đến:"));
+        toolbar.add(nvSpinnerKetThuc);
+
+        JButton btnExcel = makeButton("Xuất Excel");
+        JButton btnPdf = makeButton("In PDF");
+        btnExcel.addActionListener(e -> exportExcel(tableNhanVien, "Doanh số theo nhân viên"));
+        btnPdf.addActionListener(e -> exportPdf(tableNhanVien, "Doanh số theo nhân viên"));
+        toolbar.add(btnExcel);
+        toolbar.add(btnPdf);
+
+        cbThoiGianNhanVien.addActionListener(e -> {
+            applyDateRange(nvSpinnerBatDau, nvSpinnerKetThuc, cbThoiGianNhanVien);
+            loadNhanVien();
+        });
+        cbMaNhanVien.addActionListener(e -> {
+            if (!updatingNhanVienCombo) {
+                loadNhanVien();
+            }
+        });
+        addSpinnerChangeListener(nvSpinnerBatDau, this::loadNhanVien);
+        addSpinnerChangeListener(nvSpinnerKetThuc, this::loadNhanVien);
+
+        modelNhanVien = new DefaultTableModel(
+                new String[]{"STT", "Mã NV", "Tên nhân viên", "Số đơn đã xử lý", "Doanh số"}, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        tableNhanVien = new JTable(modelNhanVien);
+        styleTable(tableNhanVien);
+
+        cbThoiGianNhanVien.setSelectedItem("7 ngày qua");
+
+        panel.add(toolbar, BorderLayout.NORTH);
+        panel.add(createTableScrollPane(tableNhanVien), BorderLayout.CENTER);
+        return panel;
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
     //  LOAD DỮ LIỆU
     // ════════════════════════════════════════════════════════════════════════
 
@@ -515,6 +734,53 @@ public class ThongKeGUI extends JPanel {
         }
         if (chartPanelTheoThang != null) {
             chartPanelTheoThang.setData(result);
+        }
+    }
+
+    private void loadTheoNam() {
+        if (modelTheoNam == null) return;
+        ArrayList<ThongKeDoanhThuDTO> result = tkBUS.thongKeDoanhThuTheoNam();
+        modelTheoNam.setRowCount(0);
+        for (ThongKeDoanhThuDTO dto : result) {
+            modelTheoNam.addRow(new Object[]{
+                dto.getThoiGian(),
+                formatVND(dto.getTongVon()),
+                formatVND(dto.getTongDoanhThu()),
+                formatVND(dto.getLoiNhuan())
+            });
+        }
+        if (chartPanelTheoNam != null) {
+            chartPanelTheoNam.setData(result);
+        }
+    }
+
+    private void loadTheoNgayTrongThang() {
+        if (cbNamNgayTrongThang == null || cbThangNgayTrongThang == null || modelTheoNgayTrongThang == null) return;
+
+        int nam = Integer.parseInt(String.valueOf(cbNamNgayTrongThang.getSelectedItem()));
+        int thang = Integer.parseInt(String.valueOf(cbThangNgayTrongThang.getSelectedItem()));
+
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.YEAR, nam);
+        cal.set(Calendar.MONTH, thang - 1);
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        Date startDate = cal.getTime();
+
+        cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH));
+        Date endDate = cal.getTime();
+
+        ArrayList<ThongKeDoanhThuDTO> result = tkBUS.thongKeDoanhThuTuNgayDenNgay(startDate, endDate);
+        modelTheoNgayTrongThang.setRowCount(0);
+        for (ThongKeDoanhThuDTO dto : result) {
+            modelTheoNgayTrongThang.addRow(new Object[]{
+                dto.getThoiGian(),
+                formatVND(dto.getTongVon()),
+                formatVND(dto.getTongDoanhThu()),
+                formatVND(dto.getLoiNhuan())
+            });
+        }
+        if (chartPanelTheoNgayTrongThang != null) {
+            chartPanelTheoNgayTrongThang.setData(result);
         }
     }
 
@@ -601,6 +867,67 @@ public class ThongKeGUI extends JPanel {
                 dto.getTongSoSanPham(),
                 dto.getTongLoaiSanPham(),
                 formatVND(dto.getTongDoanhThu())
+            });
+        }
+    }
+
+    private void loadNhanVien() {
+        if (nvSpinnerBatDau == null || nvSpinnerKetThuc == null || modelNhanVien == null) return;
+
+        Date startDate = getDateFromSpinner(nvSpinnerBatDau);
+        Date endDate = getDateFromSpinner(nvSpinnerKetThuc);
+        if (!validateDateRange(startDate, endDate)) return;
+
+        ArrayList<Object[]> result = tkBUS.thongKeDoanhThuTheoNhanVien(startDate, endDate);
+
+        // Cập nhật danh sách mã nhân viên trong combobox theo dữ liệu hiện có.
+        String selectedCode = cbMaNhanVien != null && cbMaNhanVien.getSelectedItem() != null
+                ? cbMaNhanVien.getSelectedItem().toString()
+                : "Tất cả";
+        Set<String> maNvItems = new LinkedHashSet<>();
+        for (Object[] row : result) {
+            int maNV = ((Number) row[0]).intValue();
+            maNvItems.add(formatID("NV", maNV));
+        }
+
+        if (cbMaNhanVien != null) {
+            updatingNhanVienCombo = true;
+            cbMaNhanVien.removeAllItems();
+            cbMaNhanVien.addItem("Tất cả");
+            for (String item : maNvItems) {
+                cbMaNhanVien.addItem(item);
+            }
+            if (maNvItems.contains(selectedCode)) {
+                cbMaNhanVien.setSelectedItem(selectedCode);
+            } else {
+                cbMaNhanVien.setSelectedItem("Tất cả");
+            }
+            updatingNhanVienCombo = false;
+        }
+
+        String filterCode = cbMaNhanVien != null && cbMaNhanVien.getSelectedItem() != null
+                ? cbMaNhanVien.getSelectedItem().toString()
+                : "Tất cả";
+
+        modelNhanVien.setRowCount(0);
+        int stt = 1;
+        for (Object[] row : result) {
+            int maNV = ((Number) row[0]).intValue();
+            String tenNV = String.valueOf(row[1]);
+            int soDon = ((Number) row[2]).intValue();
+            double doanhSo = ((Number) row[3]).doubleValue();
+            String maNVFormat = formatID("NV", maNV);
+
+            if (!"Tất cả".equals(filterCode) && !filterCode.equals(maNVFormat)) {
+                continue;
+            }
+
+            modelNhanVien.addRow(new Object[]{
+                stt++,
+                maNVFormat,
+                tenNV,
+                soDon,
+                formatVND(doanhSo)
             });
         }
     }
@@ -975,6 +1302,14 @@ public class ThongKeGUI extends JPanel {
             years[i] = String.valueOf(currentYear - i);
         }
         return years;
+    }
+
+    private String[] buildMonthItems() {
+        String[] months = new String[12];
+        for (int i = 1; i <= 12; i++) {
+            months[i - 1] = String.format("%02d", i);
+        }
+        return months;
     }
 
     private int getRowLimit(JComboBox<String> cb) {
